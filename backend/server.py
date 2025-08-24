@@ -17,6 +17,10 @@ import base64
 from io import BytesIO
 from PIL import Image
 import aiofiles
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Initialize FastAPI app
 app = FastAPI(title="Kairo AI Browser Backend", version="1.0.0")
