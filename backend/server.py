@@ -122,6 +122,7 @@ Examples:
 - "Search for cats" -> {"intent": "search for cats", "commands": [{"type": "click", "params": {"selector": "input[type='search']"}}, {"type": "type", "params": {"text": "cats"}}]}
 """
 
+        logger.info("Making Groq API request")
         response = groq_client.chat.completions.create(
             messages=[
                 {"role": "system", "content": system_prompt},
