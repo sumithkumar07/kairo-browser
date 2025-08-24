@@ -133,7 +133,14 @@ Examples:
         
         # Try to parse JSON response
         try:
-            parsed_response = json.loads(ai_response)
+            # Extract JSON from response if it contains extra text
+            json_start = ai_response.find('{')
+            json_end = ai_response.rfind('}') + 1
+            if json_start != -1 and json_end > json_start:
+                json_content = ai_response[json_start:json_end]
+                parsed_response = json.loads(json_content)
+            else:
+                parsed_response = json.loads(ai_response)
         except json.JSONDecodeError:
             # If not JSON, create a simple response
             parsed_response = {
