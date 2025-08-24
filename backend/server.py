@@ -82,9 +82,12 @@ async def health_check():
 async def process_ai_query(query: AIQuery):
     """Process AI query and return browser commands"""
     try:
+        logger.info(f"Processing AI query: {query.query}")
         if not groq_client:
+            logger.error("Groq API not configured")
             raise HTTPException(status_code=500, detail="Groq API not configured")
         
+        logger.info("Groq client available, making API call")
         # System prompt for browser automation
         system_prompt = """You are Kairo AI, an intelligent browser assistant. You help users navigate and interact with websites through natural language commands.
 
