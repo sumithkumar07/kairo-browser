@@ -156,6 +156,7 @@ Examples:
             }
         
         # Store the interaction
+        logger.info("Storing interaction in database")
         interaction = {
             "session_id": query.session_id or str(uuid.uuid4()),
             "query": query.query,
