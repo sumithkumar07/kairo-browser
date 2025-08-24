@@ -133,7 +133,9 @@ Examples:
             max_tokens=1000
         )
         
+        logger.info("Groq API response received")
         ai_response = response.choices[0].message.content
+        logger.info(f"AI response: {ai_response[:100]}...")
         
         # Try to parse JSON response
         try:
