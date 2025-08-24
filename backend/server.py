@@ -165,6 +165,7 @@ Examples:
             "context": query.context
         }
         db.ai_interactions.insert_one(interaction)
+        logger.info("Interaction stored successfully")
         
         return parsed_response
         
