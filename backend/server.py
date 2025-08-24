@@ -221,6 +221,8 @@ async def execute_browser_command(command: BrowserCommand):
         
         return result
         
+    except HTTPException:
+        raise  # Re-raise HTTPException as-is
     except Exception as e:
         logger.error(f"Error executing browser command: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error executing command: {str(e)}")
