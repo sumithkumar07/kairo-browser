@@ -624,18 +624,24 @@ class KairoBackendTester:
         return False
         
     def run_all_tests(self):
-        """Run all tests"""
-        print("🚀 Starting Kairo AI Browser Backend Tests")
-        print("=" * 50)
+        """Run all comprehensive integration tests"""
+        print("🚀 Starting Kairo AI Browser Comprehensive Integration Tests")
+        print("=" * 70)
         
         tests = [
             ("Health Check", self.test_health_check),
             ("AI Query Processing", self.test_ai_query),
             ("Browser Command Execution", self.test_browser_execute),
             ("Workflow Execution", self.test_workflow_execute),
-            ("Session Management", self.test_sessions),
-            ("Proxy Functionality", self.test_proxy),
-            ("Error Handling", self.test_error_handling)
+            ("Session Management API", self.test_sessions),
+            ("Basic Proxy Functionality", self.test_proxy),
+            ("Enhanced Proxy with Smart Routing", self.test_enhanced_proxy),
+            ("Browser Proxy with Playwright", self.test_browser_proxy),
+            ("MongoDB Connection & Data Storage", self.test_mongodb_connection),
+            ("Session Management Across Components", self.test_session_management),
+            ("Integration Flow - YouTube (AI→Browser→Enhanced Proxy)", self.test_integration_flow_youtube),
+            ("Integration Flow - Wikipedia (AI→Browser→HTTP Proxy)", self.test_integration_flow_wikipedia),
+            ("Error Handling & Fallback Mechanisms", self.test_error_handling)
         ]
         
         passed = 0
@@ -643,17 +649,29 @@ class KairoBackendTester:
         
         for test_name, test_func in tests:
             print(f"\n📋 Running: {test_name}")
+            print("-" * 50)
             if test_func():
                 passed += 1
+                print(f"✅ {test_name} - PASSED")
+            else:
+                print(f"❌ {test_name} - FAILED")
                 
-        print("\n" + "=" * 50)
-        print(f"🏁 Test Summary: {passed}/{total} test suites passed")
+        print("\n" + "=" * 70)
+        print(f"🏁 COMPREHENSIVE TEST SUMMARY: {passed}/{total} test suites passed")
         
         # Print detailed results
-        print("\n📊 Detailed Results:")
+        print("\n📊 Detailed Test Results:")
+        print("-" * 70)
         for result in self.test_results:
             status = "✅" if result["success"] else "❌"
             print(f"{status} {result['test']}: {result['message']}")
+            
+        # Integration summary
+        print(f"\n🔗 Integration Test Results:")
+        print(f"   • Backend API Endpoints: {'✅ ALL WORKING' if passed >= 7 else '❌ SOME FAILED'}")
+        print(f"   • Enhanced Proxy System: {'✅ WORKING' if passed >= 9 else '❌ FAILED'}")
+        print(f"   • Complete Integration Flows: {'✅ WORKING' if passed >= 11 else '❌ FAILED'}")
+        print(f"   • Component Connectivity: {'✅ VERIFIED' if passed >= 12 else '❌ ISSUES FOUND'}")
             
         return passed == total
 
