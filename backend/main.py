@@ -14,7 +14,6 @@ import time
 # Import configuration and routes
 from config import settings
 from api.routes import router
-from api.ultimate_enhanced_routes import router as ultimate_router
 
 # Configure logging
 logging.basicConfig(
@@ -121,7 +120,6 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 # Include API routes
 app.include_router(router, prefix="/api")
-app.include_router(ultimate_router, prefix="/api")
 
 # Root endpoint
 @app.get("/")
