@@ -897,10 +897,11 @@ async def enhanced_http_proxy(request_data: Dict[str, Any]):
 @app.post("/api/proxy")
 async def proxy_request(request_data: Dict[str, Any]):
     """Proxy requests to external websites with header manipulation to bypass iframe restrictions"""
+    url = request_data.get("url")
+    if not url:
+        raise HTTPException(status_code=400, detail="URL required")
+    
     try:
-        url = request_data.get("url")
-        if not url:
-            raise HTTPException(status_code=400, detail="URL required")
         
         # Custom headers to mimic a regular browser
         custom_headers = {
