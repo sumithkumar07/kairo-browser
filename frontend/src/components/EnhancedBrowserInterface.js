@@ -782,12 +782,14 @@ const EnhancedBrowserInterface = ({ onBackToWelcome }) => {
   };
 
   const enhancedQuickCommands = [
-    { text: 'Deep search AI trends', icon: '🔍', color: 'bg-blue-50 text-blue-600' },
-    { text: 'Create agent for scraping', icon: '🤖', color: 'bg-purple-50 text-purple-600' },
-    { text: 'Generate report analytics', icon: '📊', color: 'bg-green-50 text-green-600' },
-    { text: 'Translate this page', icon: '🌐', color: 'bg-orange-50 text-orange-600' },
-    { text: 'Read aloud current content', icon: '🔊', color: 'bg-pink-50 text-pink-600' },
-    { text: 'Open YouTube', icon: '🎥', color: 'bg-red-50 text-red-600' }
+    { text: 'Create daily email workflow', icon: '⚙️', color: 'bg-purple-50 text-purple-600' },
+    { text: 'Build social media routine', icon: '📱', color: 'bg-blue-50 text-blue-600' },
+    { text: 'Deep search AI trends', icon: '🔍', color: 'bg-emerald-50 text-emerald-600' },
+    { text: 'Create agent for scraping', icon: '🤖', color: 'bg-indigo-50 text-indigo-600' },
+    { text: 'Automate competitor monitoring', icon: '📊', color: 'bg-green-50 text-green-600' },
+    { text: 'Generate report analytics', icon: '📈', color: 'bg-orange-50 text-orange-600' },
+    { text: 'Create morning routine workflow', icon: '☀️', color: 'bg-yellow-50 text-yellow-600' },
+    { text: 'Build website monitoring task', icon: '🕵️', color: 'bg-red-50 text-red-600' }
   ];
 
   const handleQuickCommand = async (command) => {
