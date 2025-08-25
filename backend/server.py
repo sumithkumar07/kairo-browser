@@ -673,10 +673,11 @@ async def enhanced_proxy_request(request_data: Dict[str, Any]):
 
 async def enhanced_http_proxy(request_data: Dict[str, Any]):
     """Enhanced HTTP proxy with advanced anti-detection and header manipulation"""
+    url = request_data.get("url")
+    if not url:
+        raise HTTPException(status_code=400, detail="URL required")
+    
     try:
-        url = request_data.get("url")
-        if not url:
-            raise HTTPException(status_code=400, detail="URL required")
         
         # Enhanced headers to mimic real browser behavior
         enhanced_headers = {
