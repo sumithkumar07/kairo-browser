@@ -32,11 +32,11 @@ class ReportService:
         }
         
         self.visualization_types = {
-            'chart': self._create_chart,
-            'graph': self._create_graph,
-            'table': self._create_table,
-            'infographic': self._create_infographic,
-            'timeline': self._create_timeline
+            'chart': self._create_simple_chart,
+            'graph': self._create_simple_chart,
+            'table': self._create_simple_table,
+            'infographic': self._create_simple_chart,
+            'timeline': self._create_simple_chart
         }
         
         # Set matplotlib style
