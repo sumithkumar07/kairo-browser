@@ -1384,5 +1384,75 @@ class UltraProxyService:
             "suggestions": True
         }
 
-# Global proxy service instance
-proxy_service = UltraProxyService()
+    # Compatibility methods for existing API
+    async def enhanced_http_proxy(self, url: str, custom_headers: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
+        """Enhanced HTTP proxy - now routes to ultra method"""
+        return await self.rotating_http_proxy(url, custom_headers)
+    
+    async def browser_proxy(self, url: str, custom_headers: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
+        """Browser proxy - now routes to ultra method"""
+        return await self.ultra_stealth_browser_proxy(url, custom_headers)
+    
+    def _get_browser_headers(self) -> Dict[str, str]:
+        """Legacy method - now uses rotating headers"""
+        return self._get_rotating_headers(random.choice(self.user_agents))
+    
+    def _get_browser_args(self) -> list:
+        """Legacy method - now uses ultra-stealth args"""
+        return self._get_ultra_stealth_args()
+    
+    def _get_stealth_user_agent(self) -> str:
+        """Legacy method - now returns random user agent"""
+        return random.choice(self.user_agents)
+    
+    def _get_stealth_headers(self, custom_headers: Optional[Dict[str, str]] = None) -> Dict[str, str]:
+        """Legacy method - now uses ultra headers"""
+        return self._get_ultra_stealth_headers(custom_headers, random.choice(self.user_agents))
+    
+    def _get_anti_detection_script(self) -> str:
+        """Legacy method - now uses ultra script"""
+        return self._get_ultra_anti_detection_script()
+    
+    def _remove_blocking_meta_tags(self, soup):
+        """Legacy method - now uses ultra removal"""
+        self._ultra_remove_blocking_elements(soup)
+    
+    def _remove_frame_busting_scripts(self, soup):
+        """Legacy method - now uses ultra removal"""
+        self._ultra_remove_frame_busting_scripts(soup)
+    
+    def _add_base_and_headers(self, soup, base_url: str):
+        """Legacy method - now uses ultra headers"""
+        self._ultra_add_base_and_headers(soup, base_url)
+    
+    def _rewrite_links_and_forms(self, soup, base_url: str):
+        """Legacy method - now uses ultra rewriting"""
+        self._ultra_rewrite_links_and_forms(soup, base_url)
+    
+    def _add_compatibility_enhancements(self, soup, proxy_type: str):
+        """Legacy method - now uses ultra enhancements"""
+        self._add_ultra_compatibility_enhancements(soup, proxy_type, "")
+    
+    def _get_compatibility_css(self) -> str:
+        """Legacy method - now uses ultra CSS"""
+        return self._get_ultra_compatibility_css()
+    
+    def _get_compatibility_js(self, proxy_type: str) -> str:
+        """Legacy method - now uses ultra JS"""
+        return self._get_ultra_compatibility_js(proxy_type, "")
+    
+    def _clean_response_headers(self, headers) -> Dict[str, str]:
+        """Legacy method - now uses ultra cleaning"""
+        return self._ultra_clean_response_headers(headers)
+    
+    async def _fallback_response(self, url: str, error: str) -> Dict[str, Any]:
+        """Legacy method - now uses advanced fallback"""
+        return await self._advanced_fallback_response(url, error)
+    
+    async def _process_html_content(self, html: str, base_url: str) -> str:
+        """Legacy method - now uses ultra processing"""
+        return await self._process_ultra_html_content(html, base_url, random.choice(self.user_agents))
+    
+    async def _process_browser_content(self, html: str, base_url: str) -> str:
+        """Legacy method - now uses ultra processing"""
+        return await self._process_ultra_browser_content(html, base_url)
