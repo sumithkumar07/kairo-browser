@@ -1,1 +1,1 @@
-# Integration Framework for External Services
+# Integrations module for external service connections
