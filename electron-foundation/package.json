@@ -4,8 +4,9 @@
   "description": "Kairo AI Browser - Local-First Architecture with Native Chromium",
   "main": "main.js",
   "scripts": {
-    "start": "electron .",
-    "dev": "electron . --dev",
+    "start": "electron main.js",
+    "dev": "electron start-dev.js",
+    "test": "electron start-dev.js",
     "build": "electron-builder",
     "build-win": "electron-builder --windows",
     "build-mac": "electron-builder --macos",
