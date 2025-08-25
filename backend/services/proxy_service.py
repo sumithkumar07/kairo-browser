@@ -1456,3 +1456,6 @@ class UltraProxyService:
     async def _process_browser_content(self, html: str, base_url: str) -> str:
         """Legacy method - now uses ultra processing"""
         return await self._process_ultra_browser_content(html, base_url)
+
+# Global proxy service instance
+proxy_service = UltraProxyService()
