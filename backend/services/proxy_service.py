@@ -921,202 +921,344 @@ class UltraProxyService:
         if soup.body:
             soup.body.append(js_tag)
     
-    def _get_compatibility_css(self) -> str:
-        """Get enhanced compatibility CSS"""
+    def _add_ultra_compatibility_enhancements(self, soup, proxy_type: str, user_agent: str):
+        """Add ultra-enhanced CSS and JavaScript compatibility"""
+        # Ultra-enhanced CSS
+        style_tag = soup.new_tag("style")
+        style_tag.string = self._get_ultra_compatibility_css()
+        
+        if soup.head:
+            soup.head.append(style_tag)
+        elif soup.body:
+            soup.body.insert(0, style_tag)
+        
+        # Ultra-enhanced JavaScript
+        js_tag = soup.new_tag("script")
+        js_tag.string = self._get_ultra_compatibility_js(proxy_type, user_agent)
+        
+        if soup.body:
+            soup.body.append(js_tag)
+        elif soup.head:
+            soup.head.append(js_tag)
+    
+    def _get_ultra_compatibility_css(self) -> str:
+        """Get ultra-enhanced compatibility CSS"""
         return """
-            /* Kairo Browser Enhanced Compatibility Styles */
-            body { 
+            /* Kairo Browser Ultra-Enhanced Compatibility Styles */
+            html, body { 
                 margin: 0 !important; 
                 padding: 0 !important; 
                 overflow-x: auto !important;
                 min-height: 100vh !important;
                 width: 100% !important;
+                background: transparent !important;
             }
             
             * { 
                 box-sizing: border-box !important; 
             }
             
-            /* Fix iframe breaking elements */
-            iframe, embed, object { 
-                max-width: 100% !important; 
+            /* Ultra iframe compatibility fixes */
+            iframe, embed, object, video { 
+                max-width: 100% !important;
+                height: auto !important;
             }
             
-            /* Prevent fixed positioning issues */
-            .fixed-header, .fixed-nav, .sticky-header, 
-            [style*="position: fixed"], [class*="fixed"], [id*="fixed"] {
+            /* Neutralize all fixed positioning */
+            *[style*="position: fixed"], 
+            *[style*="position:fixed"],
+            .fixed, .sticky, .navbar-fixed, .header-fixed,
+            [class*="fixed"], [class*="sticky"], [id*="fixed"], [id*="sticky"] {
                 position: relative !important;
                 top: auto !important;
                 left: auto !important;
                 right: auto !important;
                 bottom: auto !important;
                 z-index: auto !important;
+                transform: none !important;
             }
             
-            /* Ensure content visibility */
-            [style*="display: none"], [style*="visibility: hidden"] {
+            /* Force visibility of hidden elements */
+            *[style*="display: none"], 
+            *[style*="display:none"],
+            *[style*="visibility: hidden"], 
+            *[style*="visibility:hidden"] {
                 display: block !important;
                 visibility: visible !important;
+                opacity: 1 !important;
             }
             
-            /* Override breakout attempts */
-            .breakout, .fullscreen, [class*="overlay"], [id*="overlay"] {
+            /* Neutralize overlay and modal breakouts */
+            .overlay, .modal, .popup, .lightbox, .backdrop,
+            [class*="overlay"], [class*="modal"], [class*="popup"],
+            [id*="overlay"], [id*="modal"], [id*="popup"] {
                 position: relative !important;
                 width: 100% !important;
                 height: auto !important;
+                background: transparent !important;
+                z-index: auto !important;
+            }
+            
+            /* Fix broken layouts */
+            body > * {
+                max-width: 100% !important;
+            }
+            
+            /* Responsive images and media */
+            img, video, canvas, svg {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+            
+            /* Fix scroll issues */
+            html {
+                overflow-x: hidden !important;
+                scroll-behavior: smooth !important;
+            }
+            
+            /* Remove potential click-jackers */
+            *[style*="pointer-events: none"],
+            *[style*="pointer-events:none"] {
+                pointer-events: auto !important;
             }
         """
     
-    def _get_compatibility_js(self, proxy_type: str) -> str:
-        """Get enhanced compatibility JavaScript"""
+    def _get_ultra_compatibility_js(self, proxy_type: str, user_agent: str) -> str:
+        """Get ultra-enhanced compatibility JavaScript"""
         return f"""
-            // Kairo Browser Enhanced Navigation Interception
+            // Kairo Browser Ultra-Enhanced Navigation System
             (function() {{
                 'use strict';
                 
-                console.log('Kairo Browser: Loading enhanced compatibility for {proxy_type}');
+                console.log('Kairo Browser: Ultra-compatibility system loading for {proxy_type}');
                 
                 try {{
-                    // Override frame detection
-                    Object.defineProperty(window, 'top', {{
-                        get: function() {{ return window.self; }},
-                        set: function() {{}},
-                        configurable: false
-                    }});
-                    
-                    Object.defineProperty(window, 'parent', {{
-                        get: function() {{ return window.self; }},
-                        set: function() {{}},
-                        configurable: false
-                    }});
-                    
-                    Object.defineProperty(window, 'frameElement', {{
-                        get: function() {{ return null; }},
-                        set: function() {{}},
-                        configurable: false
-                    }});
-                    
-                    // Intercept navigation attempts
-                    const originalOpen = window.open;
-                    window.open = function(url, target, features) {{
-                        console.log('Kairo Browser: Intercepted window.open to', url);
-                        if (window.parent && window.parent.postMessage) {{
-                            window.parent.postMessage({{
-                                type: 'NAVIGATE_TO',
-                                url: url
-                            }}, '*');
+                    // Ultra frame detection prevention
+                    const frameProps = ['top', 'parent', 'frameElement'];
+                    frameProps.forEach(prop => {{
+                        try {{
+                            Object.defineProperty(window, prop, {{
+                                get: function() {{ 
+                                    return prop === 'frameElement' ? null : window.self; 
+                                }},
+                                set: function() {{}},
+                                configurable: false,
+                                enumerable: true
+                            }});
+                        }} catch(e) {{
+                            console.log('Frame prop override warning:', e);
                         }}
-                        return null;
+                    }});
+                    
+                    // Ultra navigation interception
+                    const originalMethods = {{
+                        open: window.open,
+                        replace: window.location.replace?.bind(window.location),
+                        assign: window.location.assign?.bind(window.location)
+                    }};
+                    
+                    // Override window.open
+                    window.open = function(url, target, features) {{
+                        console.log('Kairo: Intercepted window.open ->', url);
+                        window.parent?.postMessage({{
+                            type: 'NAVIGATE_TO',
+                            url: url,
+                            method: 'window.open'
+                        }}, '*');
+                        return {{}};  // Return mock window object
                     }};
                     
                     // Override location methods
                     ['replace', 'assign'].forEach(method => {{
-                        const original = window.location[method];
-                        window.location[method] = function(url) {{
-                            console.log(`Kairo Browser: Intercepted location.${{method}} to`, url);
-                            if (window.parent && window.parent.postMessage) {{
-                                window.parent.postMessage({{
+                        if (window.location[method]) {{
+                            window.location[method] = function(url) {{
+                                console.log(`Kairo: Intercepted location.${{method}} ->`, url);
+                                window.parent?.postMessage({{
                                     type: 'NAVIGATE_TO',
-                                    url: url
+                                    url: url,
+                                    method: `location.${{method}}`
                                 }}, '*');
-                            }}
-                        }};
+                            }};
+                        }}
                     }});
                     
-                    // Enhanced link click interception
-                    document.addEventListener('click', function(e) {{
-                        var target = e.target;
-                        
-                        while (target && target.tagName !== 'A') {{
-                            target = target.parentElement;
+                    // Ultra location.href override
+                    let currentHref = window.location.href;
+                    Object.defineProperty(window.location, 'href', {{
+                        get: function() {{ return currentHref; }},
+                        set: function(url) {{
+                            console.log('Kairo: Intercepted location.href =', url);
+                            window.parent?.postMessage({{
+                                type: 'NAVIGATE_TO',
+                                url: url,
+                                method: 'location.href'
+                            }}, '*');
                         }}
+                    }});
+                    
+                    // Enhanced link interception with multiple selectors
+                    function interceptClick(e) {{
+                        let target = e.target;
+                        let maxDepth = 5;
+                        let depth = 0;
                         
-                        if (target && target.tagName === 'A') {{
-                            var proxyUrl = target.getAttribute('data-proxy-url');
-                            var href = target.getAttribute('href');
+                        // Traverse up to find clickable element
+                        while (target && depth < maxDepth) {{
+                            if (target.tagName === 'A' || target.hasAttribute('data-kairo-proxy-url')) {{
+                                const url = target.getAttribute('data-kairo-proxy-url') || 
+                                           target.getAttribute('href') || 
+                                           target.getAttribute('data-href');
+                                
+                                if (url && url !== '#' && !url.startsWith('javascript:') && !url.startsWith('mailto:')) {{
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    e.stopImmediatePropagation();
+                                    
+                                    console.log('Kairo: Intercepted click ->', url);
+                                    window.parent?.postMessage({{
+                                        type: 'NAVIGATE_TO',
+                                        url: url,
+                                        method: 'click'
+                                    }}, '*');
+                                    return false;
+                                }}
+                            }}
+                            target = target.parentElement;
+                            depth++;
+                        }}
+                    }}
+                    
+                    // Enhanced form interception
+                    function interceptSubmit(e) {{
+                        const form = e.target;
+                        if (form && form.tagName === 'FORM') {{
+                            const action = form.getAttribute('data-kairo-proxy-action') || 
+                                         form.getAttribute('action');
                             
-                            if (proxyUrl || (href && href !== '#' && !href.startsWith('javascript:'))) {{
+                            if (action && action !== '#' && !action.startsWith('javascript:')) {{
                                 e.preventDefault();
                                 e.stopPropagation();
                                 
-                                var navigateUrl = proxyUrl || href;
-                                console.log('Kairo Browser: Intercepted link click to', navigateUrl);
-                                
-                                if (window.parent && window.parent.postMessage) {{
-                                    window.parent.postMessage({{
-                                        type: 'NAVIGATE_TO',
-                                        url: navigateUrl
-                                    }}, '*');
+                                // Build form data
+                                const formData = new FormData(form);
+                                const params = new URLSearchParams();
+                                for (const [key, value] of formData.entries()) {{
+                                    params.append(key, value);
                                 }}
+                                
+                                let finalUrl = action;
+                                const method = (form.method || 'GET').toUpperCase();
+                                
+                                if (method === 'GET' && params.toString()) {{
+                                    finalUrl += (action.includes('?') ? '&' : '?') + params.toString();
+                                }}
+                                
+                                console.log('Kairo: Intercepted form submit ->', finalUrl);
+                                window.parent?.postMessage({{
+                                    type: 'NAVIGATE_TO',
+                                    url: finalUrl,
+                                    method: 'form_submit',
+                                    formMethod: method
+                                }}, '*');
                             }}
                         }}
-                    }}, true);
+                    }}
                     
-                    // Form submission interception
-                    document.addEventListener('submit', function(e) {{
-                        var form = e.target;
-                        if (form && form.tagName === 'FORM') {{
-                            var proxyAction = form.getAttribute('data-proxy-action');
-                            if (proxyAction) {{
-                                e.preventDefault();
-                                
-                                var formData = new FormData(form);
-                                var params = new URLSearchParams();
-                                for (var pair of formData.entries()) {{
-                                    params.append(pair[0], pair[1]);
-                                }}
-                                
-                                var finalUrl = proxyAction;
-                                if (form.method.toLowerCase() === 'get' && params.toString()) {{
-                                    finalUrl += (proxyAction.includes('?') ? '&' : '?') + params.toString();
-                                }}
-                                
-                                if (window.parent && window.parent.postMessage) {{
-                                    window.parent.postMessage({{
-                                        type: 'NAVIGATE_TO',
-                                        url: finalUrl
-                                    }}, '*');
-                                }}
+                    // Add event listeners with ultra-high priority
+                    document.addEventListener('click', interceptClick, {{ capture: true, passive: false }});
+                    document.addEventListener('submit', interceptSubmit, {{ capture: true, passive: false }});
+                    
+                    // Additional safety - override common navigation functions
+                    if (window.history && window.history.pushState) {{
+                        const originalPushState = window.history.pushState;
+                        window.history.pushState = function(state, title, url) {{
+                            if (url) {{
+                                console.log('Kairo: Intercepted history.pushState ->', url);
+                                window.parent?.postMessage({{
+                                    type: 'NAVIGATE_TO',
+                                    url: url,
+                                    method: 'history.pushState'
+                                }}, '*');
+                                return;
                             }}
-                        }}
-                    }}, true);
+                            return originalPushState.call(this, state, title, url);
+                        }};
+                    }}
                     
-                    console.log('Kairo Browser: Enhanced navigation interception loaded');
+                    // Handle hashchange for SPAs
+                    window.addEventListener('hashchange', function(e) {{
+                        console.log('Kairo: Hash change detected ->', window.location.hash);
+                        // Don't intercept hash changes, they're usually safe
+                    }});
                     
-                }} catch (e) {{
-                    console.log('Kairo Browser compatibility error:', e);
+                    console.log('Kairo Browser: Ultra-navigation system active');
+                    
+                    // Mark as processed
+                    window.kairoUltraProcessed = true;
+                    
+                }} catch (error) {{
+                    console.error('Kairo ultra-compatibility error:', error);
                 }}
             }})();
+            
+            // Additional DOM ready handling
+            if (document.readyState === 'loading') {{
+                document.addEventListener('DOMContentLoaded', function() {{
+                    console.log('Kairo: DOM ready, applying final compatibility fixes');
+                    // Apply any additional fixes after DOM is ready
+                }});
+            }} else {{
+                console.log('Kairo: Document already ready, compatibility active');
+            }}
         """
     
-    def _clean_response_headers(self, headers) -> Dict[str, str]:
-        """Clean response headers for iframe compatibility"""
+    def _ultra_clean_response_headers(self, headers) -> Dict[str, str]:
+        """Ultra-clean response headers for maximum compatibility"""
         clean_headers = {}
-        blocked_headers = ['x-frame-options', 'content-security-policy', 'x-content-type-options']
         
+        # Headers to completely remove
+        blocked_headers = [
+            'x-frame-options', 'content-security-policy', 'x-content-type-options',
+            'strict-transport-security', 'referrer-policy', 'permissions-policy',
+            'cross-origin-embedder-policy', 'cross-origin-opener-policy',
+            'cross-origin-resource-policy', 'expect-ct', 'feature-policy'
+        ]
+        
+        # Keep safe headers only
         for key, value in headers.items():
             if key.lower() not in blocked_headers:
                 clean_headers[key] = value
         
-        # Add iframe-friendly headers
-        clean_headers['X-Frame-Options'] = 'ALLOWALL'
-        clean_headers['Content-Security-Policy'] = "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; frame-ancestors *;"
+        # Add ultra-permissive headers
+        ultra_headers = {
+            'X-Frame-Options': 'ALLOWALL',
+            'Content-Security-Policy': "default-src * 'unsafe-inline' 'unsafe-eval' data: blob: filesystem: about: ws: wss: 'unsafe-hashes'; script-src * 'unsafe-inline' 'unsafe-eval'; connect-src * 'unsafe-inline'; img-src * data: blob: 'unsafe-inline'; frame-src *; style-src * 'unsafe-inline'; object-src *; media-src *; font-src * data:; frame-ancestors *; form-action *;",
+            'Permissions-Policy': 'geolocation=*, microphone=*, camera=*, fullscreen=*',
+            'Cross-Origin-Embedder-Policy': 'unsafe-none',
+            'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+            'Cross-Origin-Resource-Policy': 'cross-origin',
+            'Referrer-Policy': 'no-referrer-when-downgrade'
+        }
         
+        clean_headers.update(ultra_headers)
         return clean_headers
     
-    async def _fallback_response(self, url: str, error: str) -> Dict[str, Any]:
-        """Fallback response when all proxy methods fail"""
+    async def _advanced_fallback_response(self, url: str, error: str) -> Dict[str, Any]:
+        """Advanced fallback response with better UX"""
+        domain = urlparse(url).netloc if url else 'unknown'
+        
         fallback_html = f"""
         <!DOCTYPE html>
-        <html>
+        <html lang="en">
         <head>
-            <title>Kairo Browser - Content Loading</title>
+            <title>Kairo Browser - Enhanced Access</title>
             <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <style>
                 body {{
-                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
                     margin: 0;
-                    padding: 40px;
+                    padding: 20px;
                     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                     color: white;
                     text-align: center;
@@ -1128,42 +1270,104 @@ class UltraProxyService:
                 }}
                 .container {{
                     background: rgba(255, 255, 255, 0.1);
-                    padding: 30px;
-                    border-radius: 15px;
-                    backdrop-filter: blur(10px);
-                    max-width: 500px;
+                    padding: 40px;
+                    border-radius: 20px;
+                    backdrop-filter: blur(15px);
+                    max-width: 600px;
+                    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
                 }}
-                .icon {{ font-size: 48px; margin-bottom: 20px; }}
-                h1 {{ margin: 0 0 15px 0; font-size: 24px; }}
-                p {{ margin: 10px 0; opacity: 0.9; }}
-                .url {{ 
+                .icon {{ font-size: 64px; margin-bottom: 20px; }}
+                h1 {{ margin: 0 0 20px 0; font-size: 28px; font-weight: 600; }}
+                .domain {{ 
                     background: rgba(255, 255, 255, 0.2); 
-                    padding: 10px; 
-                    border-radius: 8px; 
+                    padding: 15px 20px; 
+                    border-radius: 12px; 
                     word-break: break-all; 
-                    font-family: monospace;
+                    font-family: 'Monaco', 'Menlo', monospace;
+                    font-size: 16px;
+                    margin: 20px 0;
                 }}
-                .retry {{
+                .suggestions {{
+                    text-align: left;
+                    margin: 30px 0;
+                    background: rgba(255, 255, 255, 0.05);
+                    padding: 20px;
+                    border-radius: 12px;
+                }}
+                .suggestion {{
+                    margin: 10px 0;
+                    padding: 10px;
+                    background: rgba(255, 255, 255, 0.1);
+                    border-radius: 8px;
+                    font-size: 14px;
+                }}
+                .buttons {{
+                    display: flex;
+                    gap: 15px;
+                    flex-wrap: wrap;
+                    justify-content: center;
+                    margin-top: 30px;
+                }}
+                .btn {{
                     background: #4CAF50;
                     color: white;
                     border: none;
                     padding: 12px 24px;
-                    border-radius: 6px;
+                    border-radius: 8px;
                     cursor: pointer;
-                    margin-top: 20px;
                     font-size: 16px;
+                    font-weight: 500;
+                    transition: all 0.3s ease;
+                    text-decoration: none;
+                    display: inline-block;
                 }}
-                .retry:hover {{ background: #45a049; }}
+                .btn:hover {{ 
+                    background: #45a049; 
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                }}
+                .btn-secondary {{
+                    background: rgba(255, 255, 255, 0.2);
+                }}
+                .btn-secondary:hover {{
+                    background: rgba(255, 255, 255, 0.3);
+                }}
+                .footer {{
+                    margin-top: 30px;
+                    font-size: 12px;
+                    opacity: 0.8;
+                }}
             </style>
         </head>
         <body>
             <div class="container">
                 <div class="icon">🌐</div>
-                <h1>Content Loading</h1>
-                <p>Kairo Browser is working to load content from:</p>
-                <div class="url">{url}</div>
-                <p><small>If the site has restrictions, try using the AI assistant for alternative access methods.</small></p>
-                <button class="retry" onclick="location.reload()">Retry Loading</button>
+                <h1>Enhanced Access Mode</h1>
+                <p>Kairo Browser is working to access content from:</p>
+                <div class="domain">{domain}</div>
+                
+                <div class="suggestions">
+                    <h3>💡 Try These Alternatives:</h3>
+                    <div class="suggestion">
+                        <strong>🤖 Ask AI Assistant:</strong> Use the AI button to try alternative access methods
+                    </div>
+                    <div class="suggestion">
+                        <strong>🔄 Different URL:</strong> Try www.{domain} or mobile.{domain}
+                    </div>
+                    <div class="suggestion">
+                        <strong>⏰ Try Later:</strong> Some sites may be temporarily restricting access
+                    </div>
+                </div>
+                
+                <div class="buttons">
+                    <button class="btn" onclick="location.reload()">🔄 Retry Access</button>
+                    <button class="btn btn-secondary" onclick="window.parent?.postMessage({{type: 'ASK_AI', query: 'Help me access {domain}'}}, '*')">🤖 Ask AI</button>
+                    <button class="btn btn-secondary" onclick="window.parent?.postMessage({{type: 'NAVIGATE_TO', url: 'https://google.com/search?q=site:{domain}'}}, '*')">🔍 Search Site</button>
+                </div>
+                
+                <div class="footer">
+                    <p>Kairo Browser • Ultra-Enhanced Web Access</p>
+                </div>
             </div>
         </body>
         </html>
@@ -1174,9 +1378,10 @@ class UltraProxyService:
             "status_code": 200,
             "headers": {"Content-Type": "text/html; charset=utf-8"},
             "url": url,
-            "method": "fallback",
+            "method": "advanced_fallback",
             "iframe_safe": True,
-            "error": error
+            "error": error,
+            "suggestions": True
         }
 
 # Global proxy service instance
