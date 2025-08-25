@@ -636,10 +636,11 @@ async def proxy_with_browser(request_data: Dict[str, Any]):
 @app.post("/api/proxy/enhanced")
 async def enhanced_proxy_request(request_data: Dict[str, Any]):
     """Smart proxy routing with enhanced capabilities for different site types"""
+    url = request_data.get("url")
+    if not url:
+        raise HTTPException(status_code=400, detail="URL required")
+    
     try:
-        url = request_data.get("url")
-        if not url:
-            raise HTTPException(status_code=400, detail="URL required")
         
         # Smart routing based on site characteristics
         heavy_js_sites = [
