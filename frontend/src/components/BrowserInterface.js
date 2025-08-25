@@ -151,8 +151,66 @@ const BrowserInterface = ({ onBackToWelcome }) => {
     { text: 'Check the news', icon: '📰' }
   ];
 
-  const handleQuickCommand = (command) => {
+  const handleQuickCommand = async (command) => {
     setCurrentMessage(command);
+    
+    // Also immediately process the command
+    addChatMessage('user', command);
+    
+    try {
+      const aiResponse = await processAIQuery(command, {
+        currentUrl: currentUrl,
+        sessionId: sessionId
+      });
+
+      let responseText = aiResponse.explanation || 'I understand your request.';
+      
+      // Execute AI commands
+      if (aiResponse.commands && aiResponse.commands.length > 0) {
+        for (const aiCommand of aiResponse.commands) {
+          if (aiCommand.type === 'open' && aiCommand.params?.url) {
+            responseText += `\n\nOpening ${aiCommand.params.url}...`;
+            await navigateToUrl(aiCommand.params.url);
+            
+            // Load content via enhanced proxy system
+            try {
+              console.log(`🔍 Attempting to load content for: ${aiCommand.params.url}`);
+              const response = await proxyRequest(aiCommand.params.url);
+              console.log(`📡 Proxy response received:`, response);
+              
+              if (response && response.content) {
+                console.log(`✅ Content loaded using ${response.method} for ${aiCommand.params.url}`);
+                console.log(`📄 Content length: ${response.content.length} characters`);
+                setIframeContent(response.content);
+                
+                // Update response text with method info
+                if (response.method === 'enhanced_browser_rendered') {
+                  responseText += `\n✅ Loaded using enhanced browser engine with anti-detection`;
+                } else if (response.method === 'enhanced_http_proxy') {
+                  responseText += `\n✅ Loaded using enhanced HTTP proxy`;
+                } else {
+                  responseText += `\n✅ Loaded using ${response.method}`;
+                }
+              } else {
+                console.error('❌ No content in proxy response:', response);
+                responseText += `\n⚠️ Received response but no content found`;
+              }
+            } catch (proxyError) {
+              console.error('❌ All proxy methods failed:', proxyError);
+              responseText += `\n⚠️ Unable to load content directly. Error: ${proxyError.message}`;
+            }
+          }
+        }
+      }
+
+      addChatMessage('ai', responseText, { commands: aiResponse.commands });
+      
+    } catch (error) {
+      console.error('AI chat error:', error);
+      addChatMessage('ai', 'Sorry, I encountered an error processing your request. Please try again.');
+    }
+    
+    setCurrentMessage('');
   };
 
   const createNewTab = () => {
