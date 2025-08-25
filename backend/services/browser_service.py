@@ -174,6 +174,45 @@ class BrowserService:
             "requires_proxy": True  # Signal that proxy loading is needed
         }
     
+    async def _handle_youtube_video_command(self, query: str, session_id: str) -> Dict[str, Any]:
+        """Handle YouTube video search and access command"""
+        if not query:
+            raise ValueError("Search query required for YouTube video command")
+        
+        logger.info(f"🎯 Processing YouTube video request: {query}")
+        
+        # Import the ultimate YouTube service
+        from services.ultimate_youtube_service import ultimate_youtube_service
+        
+        # Use the ultimate YouTube access
+        youtube_result = await ultimate_youtube_service.search_and_access_youtube_video(
+            query=query,
+            session_id=session_id
+        )
+        
+        # Update session state
+        self.active_sessions[session_id] = {
+            "current_url": youtube_result.get("video_url", "youtube://video_access"),
+            "last_activity": datetime.now(),
+            "commands": self.active_sessions.get(session_id, {}).get("commands", 0) + 1,
+            "last_youtube_query": query
+        }
+        
+        return {
+            "data": {
+                "query": query,
+                "action": "youtube_video_access",
+                "success": youtube_result.get("success", False),
+                "video_title": youtube_result.get("video_title", ""),
+                "video_url": youtube_result.get("video_url", ""),
+                "content": youtube_result.get("content", ""),
+                "screenshot": youtube_result.get("screenshot", "")
+            },
+            "message": f"Successfully accessed YouTube video: {query}" if youtube_result.get("success") else f"YouTube access failed: {youtube_result.get('error', 'Unknown error')}",
+            "requires_proxy": False,  # We handle this internally
+            "youtube_result": youtube_result
+        }
+    
     def get_session_info(self, session_id: str) -> Optional[Dict[str, Any]]:
         """Get session information"""
         return self.active_sessions.get(session_id)
