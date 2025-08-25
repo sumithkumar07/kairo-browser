@@ -15,10 +15,16 @@ from services.proxy_service import proxy_service
 from services.workflow_service import workflow_service
 from database.mongodb import db_manager
 
+# Import enhanced routes
+from api.enhanced_routes import enhanced_router
+
 logger = logging.getLogger(__name__)
 
 # Create API router
 router = APIRouter()
+
+# Include enhanced routes
+router.include_router(enhanced_router, prefix="", tags=["enhanced"])
 
 @router.get("/health", response_model=HealthCheck)
 async def health_check():
