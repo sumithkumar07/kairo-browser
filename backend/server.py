@@ -1,6 +1,5 @@
-from fastapi import FastAPI, HTTPException, UploadFile, File, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 import os
@@ -14,10 +13,6 @@ from pymongo import MongoClient
 from groq import Groq
 import httpx
 from bs4 import BeautifulSoup
-import base64
-from io import BytesIO
-from PIL import Image
-import aiofiles
 from dotenv import load_dotenv
 
 # Load environment variables
