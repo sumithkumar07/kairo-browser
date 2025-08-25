@@ -476,6 +476,39 @@ async def proxy_with_browser(request_data: Dict[str, Any]):
             # Parse and enhance HTML
             soup = BeautifulSoup(content, 'html.parser')
             
+            # Rewrite all links to go through our proxy system
+            for link in soup.find_all(['a', 'link']):
+                href = link.get('href')
+                if href and not href.startswith('#') and not href.startswith('javascript:'):
+                    if href.startswith('//'):
+                        href = 'https:' + href
+                    elif href.startswith('/'):
+                        from urllib.parse import urljoin
+                        href = urljoin(url, href)
+                    elif not href.startswith(('http:', 'https:')):
+                        from urllib.parse import urljoin
+                        href = urljoin(url, href)
+                    
+                    # Mark links to be intercepted by JavaScript
+                    link['data-proxy-url'] = href
+                    link['href'] = '#'
+            
+            # Rewrite form actions
+            for form in soup.find_all('form'):
+                action = form.get('action')
+                if action and not action.startswith('#') and not action.startswith('javascript:'):
+                    if action.startswith('//'):
+                        action = 'https:' + action
+                    elif action.startswith('/'):
+                        from urllib.parse import urljoin
+                        action = urljoin(url, action)
+                    elif not action.startswith(('http:', 'https:')):
+                        from urllib.parse import urljoin
+                        action = urljoin(url, action)
+                    
+                    form['data-proxy-action'] = action
+                    form['action'] = '#'
+            
             # Enhanced frame-busting script removal
             scripts_to_remove = []
             for script in soup.find_all('script'):
