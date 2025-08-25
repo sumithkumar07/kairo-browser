@@ -406,8 +406,8 @@ class UltraProxyService:
             'Sec-CH-UA-Platform': '"Windows"'
         }
     
-    def _get_browser_args(self) -> list:
-        """Get browser launch arguments"""
+    def _get_ultra_stealth_args(self) -> list:
+        """Get ultra-stealth browser launch arguments"""
         return [
             '--no-sandbox',
             '--disable-setuid-sandbox',
@@ -423,8 +423,217 @@ class UltraProxyService:
             '--disable-ipc-flooding-protection',
             '--disable-blink-features=AutomationControlled',
             '--disable-web-security',
-            '--disable-features=VizDisplayCompositor'
+            '--disable-features=VizDisplayCompositor',
+            # Ultra-stealth additions
+            '--disable-infobars',
+            '--disable-notifications',
+            '--disable-default-apps',
+            '--disable-extensions-file-access-check',
+            '--disable-extensions-http-throttling',
+            '--disable-client-side-phishing-detection',
+            '--disable-component-extensions-with-background-pages',
+            '--disable-background-networking',
+            '--disable-sync',
+            '--disable-translate',
+            '--hide-scrollbars',
+            '--mute-audio',
+            '--disable-plugins-discovery',
+            '--disable-prerender-local-predictor',
+            '--disable-device-discovery-notifications'
         ]
+    
+    def _get_ultra_stealth_headers(self, custom_headers: Optional[Dict[str, str]], user_agent: str) -> Dict[str, str]:
+        """Get ultra-realistic headers with randomization"""
+        # Base headers that match the user agent
+        base_headers = {
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+            'Accept-Language': random.choice(['en-US,en;q=0.9', 'en-GB,en;q=0.9', 'en-US,en;q=0.8,es;q=0.6']),
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Cache-Control': random.choice(['no-cache', 'max-age=0', 'no-store']),
+            'Pragma': 'no-cache' if random.random() > 0.3 else None,
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': random.choice(['none', 'same-origin', 'cross-site']),
+            'Sec-Fetch-User': '?1',
+            'Upgrade-Insecure-Requests': '1',
+            'DNT': '1' if random.random() > 0.7 else None,
+            'Connection': 'keep-alive'
+        }
+        
+        # Add realistic Sec-CH-UA headers based on user agent
+        if 'Chrome' in user_agent:
+            version_match = user_agent.split('Chrome/')[1].split('.')[0] if 'Chrome/' in user_agent else '120'
+            base_headers.update({
+                'Sec-CH-UA': f'"Not_A Brand";v="8", "Chromium";v="{version_match}", "Google Chrome";v="{version_match}"',
+                'Sec-CH-UA-Mobile': '?0',
+                'Sec-CH-UA-Platform': random.choice(['"Windows"', '"macOS"', '"Linux"'])
+            })
+        
+        # Remove None values
+        headers = {k: v for k, v in base_headers.items() if v is not None}
+        
+        if custom_headers:
+            headers.update(custom_headers)
+        
+        return headers
+    
+    def _get_rotating_headers(self, user_agent: str) -> Dict[str, str]:
+        """Get rotating HTTP headers for stealth requests"""
+        return {
+            'User-Agent': user_agent,
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+            'Accept-Language': random.choice(['en-US,en;q=0.9', 'en-GB,en-US;q=0.9,en;q=0.8', 'en-US,en;q=0.8']),
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Cache-Control': random.choice(['no-cache', 'max-age=0']),
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1',
+            'DNT': '1' if random.random() > 0.5 else '0'
+        }
+    
+    def _get_ultra_anti_detection_script(self) -> str:
+        """Get comprehensive ultra-anti-detection script"""
+        return """
+            // Ultra-comprehensive anti-detection measures
+            (function() {
+                'use strict';
+                
+                // Remove webdriver property completely
+                Object.defineProperty(navigator, 'webdriver', {
+                    get: () => undefined,
+                    configurable: true
+                });
+                
+                // Remove automation indicators
+                delete navigator.__proto__.webdriver;
+                delete window.navigator.webdriver;
+                
+                // Mock chrome object
+                window.chrome = {
+                    runtime: {
+                        onConnect: undefined,
+                        onMessage: undefined
+                    },
+                    app: {
+                        isInstalled: false
+                    }
+                };
+                
+                // Override languages with realistic values
+                Object.defineProperty(navigator, 'languages', {
+                    get: () => ['en-US', 'en'],
+                    configurable: true
+                });
+                
+                // Mock realistic plugin array
+                Object.defineProperty(navigator, 'plugins', {
+                    get: () => ({
+                        length: 3,
+                        0: {name: 'Chrome PDF Plugin', description: 'Portable Document Format'},
+                        1: {name: 'Chrome PDF Viewer', description: 'PDF Viewer'},
+                        2: {name: 'Native Client', description: 'Native Client'}
+                    }),
+                    configurable: true
+                });
+                
+                // Override permissions query
+                const originalQuery = window.navigator.permissions.query;
+                window.navigator.permissions.query = (parameters) => (
+                    parameters.name === 'notifications' ?
+                        Promise.resolve({ state: Notification.permission }) :
+                        originalQuery(parameters)
+                );
+                
+                // Mock realistic hardware concurrency
+                Object.defineProperty(navigator, 'hardwareConcurrency', {
+                    get: () => Math.floor(Math.random() * 8) + 2,
+                    configurable: true
+                });
+                
+                // Override connection property
+                Object.defineProperty(navigator, 'connection', {
+                    get: () => ({
+                        effectiveType: '4g',
+                        type: 'wifi'
+                    }),
+                    configurable: true
+                });
+                
+                // Hide automation traces
+                const elementDescriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'click');
+                if (elementDescriptor) {
+                    Object.defineProperty(HTMLElement.prototype, 'click', {
+                        ...elementDescriptor,
+                        value: function(...args) {
+                            return elementDescriptor.value.apply(this, args);
+                        }
+                    });
+                }
+                
+            })();
+        """
+    
+    def _get_page_stealth_script(self) -> str:
+        """Get page-level stealth script executed after page load"""
+        return """
+            // Page-level stealth measures
+            Object.defineProperty(document, 'hidden', {
+                get: () => false,
+                configurable: true
+            });
+            
+            Object.defineProperty(document, 'visibilityState', {
+                get: () => 'visible',
+                configurable: true
+            });
+            
+            // Mock realistic screen properties
+            Object.defineProperties(screen, {
+                availHeight: { get: () => screen.height - Math.floor(Math.random() * 100) + 50 },
+                availWidth: { get: () => screen.width },
+                colorDepth: { get: () => 24 },
+                pixelDepth: { get: () => 24 }
+            });
+        """
+    
+    async def _execute_stealth_measures(self, page) -> None:
+        """Execute additional stealth measures on the page"""
+        try:
+            # Remove automation-specific properties
+            await page.evaluate("""
+                () => {
+                    // Remove any automation traces
+                    if (window.outerHeight === 0) {
+                        Object.defineProperty(window, 'outerHeight', {
+                            get: () => window.innerHeight + 85
+                        });
+                    }
+                    
+                    if (window.outerWidth === 0) {
+                        Object.defineProperty(window, 'outerWidth', {
+                            get: () => window.innerWidth + 16
+                        });
+                    }
+                }
+            """)
+            
+            # Simulate human-like mouse movements (invisible)
+            await page.mouse.move(
+                random.randint(100, 800), 
+                random.randint(100, 600)
+            )
+            
+            # Random scroll to simulate reading
+            await page.evaluate(f"""
+                window.scrollTo(0, {random.randint(0, 500)});
+            """)
+            
+        except Exception as e:
+            logger.debug(f"Stealth measures warning: {e}")
+            # Not critical, continue
     
     def _get_stealth_user_agent(self) -> str:
         """Get stealth user agent"""
