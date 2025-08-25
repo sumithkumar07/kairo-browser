@@ -383,6 +383,77 @@ async def get_active_sessions():
         logger.error(f"Error getting sessions: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error getting sessions: {str(e)}")
 
+@app.post("/api/proxy/browser")
+async def proxy_with_browser(request_data: Dict[str, Any]):
+    """Advanced proxy using headless browser for JavaScript-heavy sites like YouTube"""
+    try:
+        url = request_data.get("url")
+        if not url:
+            raise HTTPException(status_code=400, detail="URL required")
+        
+        async with async_playwright() as p:
+            # Launch browser in headless mode
+            browser = await p.chromium.launch(headless=True)
+            context = await browser.new_context(
+                viewport={'width': 1280, 'height': 720},
+                user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            )
+            
+            page = await context.new_page()
+            
+            # Navigate to the URL
+            await page.goto(url, wait_until='networkidle', timeout=30000)
+            
+            # Wait for content to load
+            await page.wait_for_timeout(3000)
+            
+            # Get the page content
+            content = await page.content()
+            
+            # Parse with BeautifulSoup
+            soup = BeautifulSoup(content, 'html.parser')
+            
+            # Remove frame-busting scripts
+            for script in soup.find_all('script'):
+                script_content = script.string or ''
+                if any(keyword in script_content for keyword in ['top.location', 'frameElement', 'self !== top']):
+                    script.decompose()
+            
+            # Add base tag
+            base_tag = soup.new_tag("base", href=url)
+            if soup.head:
+                soup.head.insert(0, base_tag)
+            
+            # Add styles to make content fit properly
+            style_tag = soup.new_tag("style")
+            style_tag.string = """
+                body { 
+                    margin: 0 !important; 
+                    padding: 0 !important; 
+                    overflow-x: auto !important;
+                    min-height: 100vh !important;
+                }
+                * { box-sizing: border-box !important; }
+                iframe { max-width: 100% !important; }
+            """
+            if soup.head:
+                soup.head.append(style_tag)
+            
+            await browser.close()
+            
+            return {
+                "content": str(soup),
+                "status_code": 200,
+                "headers": {"Content-Type": "text/html"},
+                "url": url,
+                "method": "browser_rendered",
+                "iframe_safe": True
+            }
+            
+    except Exception as e:
+        logger.error(f"Error with browser proxy: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Browser proxy error: {str(e)}")
+
 @app.post("/api/proxy")
 async def proxy_request(request_data: Dict[str, Any]):
     """Proxy requests to external websites with header manipulation to bypass iframe restrictions"""
