@@ -63,6 +63,11 @@ class WorkflowExecutionRequest(BaseModel):
     behavior_type: str = 'professional'
     context: Optional[Dict[str, Any]] = None
 
+class UltimateYouTubeRequest(BaseModel):
+    query: str
+    session_id: str = 'default'
+    search_type: str = 'video'  # video, channel, playlist
+
 # PHASE 1-6: Ultimate Proxy Endpoint
 @router.post("/ultimate/proxy")
 async def ultimate_proxy_endpoint(request: UltimateProxyRequest):
