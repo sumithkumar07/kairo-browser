@@ -384,28 +384,73 @@ async def get_active_sessions():
 
 @app.post("/api/proxy")
 async def proxy_request(request_data: Dict[str, Any]):
-    """Proxy requests to external websites"""
+    """Proxy requests to external websites with header manipulation to bypass iframe restrictions"""
     try:
         url = request_data.get("url")
         if not url:
             raise HTTPException(status_code=400, detail="URL required")
         
-        async with httpx.AsyncClient() as client:
-            response = await client.get(url, follow_redirects=True)
+        # Custom headers to mimic a regular browser
+        custom_headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept-Encoding': 'gzip, deflate',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+        }
+        
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.get(url, headers=custom_headers, follow_redirects=True)
             
             # Parse and clean HTML
             soup = BeautifulSoup(response.text, 'html.parser')
+            
+            # Remove or modify meta tags that prevent embedding
+            for meta in soup.find_all('meta'):
+                if meta.get('http-equiv') == 'X-Frame-Options':
+                    meta.decompose()
+                elif meta.get('http-equiv') == 'Content-Security-Policy':
+                    meta.decompose()
+            
+            # Remove or modify headers that prevent iframe embedding
+            for script in soup.find_all('script'):
+                script_content = script.string
+                if script_content and ('frameElement' in script_content or 'top.location' in script_content):
+                    # Remove scripts that detect iframe embedding
+                    script.decompose()
             
             # Add base tag for relative URLs
             base_tag = soup.new_tag("base", href=url)
             if soup.head:
                 soup.head.insert(0, base_tag)
             
+            # Add custom CSS to ensure content is visible
+            style_tag = soup.new_tag("style")
+            style_tag.string = """
+                body { margin: 0; padding: 0; overflow-x: auto; }
+                * { box-sizing: border-box; }
+            """
+            if soup.head:
+                soup.head.append(style_tag)
+            
+            # Clean headers for response (remove blocking headers)
+            clean_headers = dict(response.headers)
+            headers_to_remove = [
+                'x-frame-options', 'X-Frame-Options',
+                'content-security-policy', 'Content-Security-Policy',
+                'x-content-type-options', 'X-Content-Type-Options'
+            ]
+            
+            for header in headers_to_remove:
+                clean_headers.pop(header, None)
+            
             return {
                 "content": str(soup),
                 "status_code": response.status_code,
-                "headers": dict(response.headers),
-                "url": str(response.url)
+                "headers": clean_headers,
+                "url": str(response.url),
+                "iframe_safe": True
             }
             
     except Exception as e:
