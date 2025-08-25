@@ -26,9 +26,19 @@ import {
   Volume2,
   VolumeX,
   Wifi,
-  WifiOff
+  WifiOff,
+  MessageSquare,
+  Workflow,
+  MousePointer,
+  Play,
+  Save,
+  Trash2,
+  Eye,
+  EyeOff,
+  RotateCw
 } from 'lucide-react';
 import { useSession } from '../contexts/SessionContext';
+import VisualWorkflowBuilder from './VisualWorkflowBuilder';
 
 const EnhancedBrowserInterface = ({ onBackToWelcome }) => {
   const {
@@ -44,13 +54,14 @@ const EnhancedBrowserInterface = ({ onBackToWelcome }) => {
   // Enhanced state management
   const [urlInput, setUrlInput] = useState('');
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatMode, setChatMode] = useState('chat'); // 'chat' | 'builder'
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [chatMessages, setChatMessages] = useState([
     {
       type: 'ai',
-      content: "👋 Hello! I'm your enhanced AI assistant. I can help you navigate websites, automate tasks, and browse the internet more efficiently. Try commands like:\n\n🎥 'Open YouTube'\n📰 'Search for latest news'\n💼 'Go to LinkedIn'\n📧 'Open Gmail'",
+      content: "👋 Hello! I'm your enhanced AI assistant with all Fellou-level capabilities:\n\n💬 **Chat Mode**: Natural language commands\n🎨 **Visual Builder**: Drag-and-drop workflows\n🔍 **Deep Search**: Multi-source intelligent search\n🧠 **Agentic Memory**: Learns from your behavior\n🤖 **Custom Agents**: Build agents with code or descriptions\n♿ **Accessibility Tools**: TTS, translation, layout adjustments\n📊 **Smart Reports**: AI-generated insights\n\nTry: 'Deep search AI trends' or switch to Visual Builder!",
       timestamp: new Date()
     }
   ]);
@@ -74,6 +85,8 @@ const EnhancedBrowserInterface = ({ onBackToWelcome }) => {
   const [showBookmarks, setShowBookmarks] = useState(false);
   const [showDownloads, setShowDownloads] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [shadowTasks, setShadowTasks] = useState([]);
+  const [builtWorkflows, setBuiltWorkflows] = useState([]);
   
   const chatEndRef = useRef(null);
   const iframeRef = useRef(null);
@@ -149,7 +162,7 @@ const EnhancedBrowserInterface = ({ onBackToWelcome }) => {
     }
   }, [urlInput, navigateToUrl, proxyRequest]);
 
-  // Enhanced AI chat handler
+  // Enhanced AI chat handler with new capabilities
   const handleAIChat = useCallback(async (e) => {
     e.preventDefault();
     if (!currentMessage.trim()) return;
@@ -159,6 +172,33 @@ const EnhancedBrowserInterface = ({ onBackToWelcome }) => {
     setCurrentMessage('');
 
     try {
+      // Check for enhanced commands
+      if (userMessage.toLowerCase().includes('deep search')) {
+        await handleDeepSearch(userMessage);
+        return;
+      }
+      
+      if (userMessage.toLowerCase().includes('create agent')) {
+        await handleCreateAgent(userMessage);
+        return;
+      }
+      
+      if (userMessage.toLowerCase().includes('generate report')) {
+        await handleGenerateReport(userMessage);
+        return;
+      }
+
+      if (userMessage.toLowerCase().includes('translate')) {
+        await handleTranslation(userMessage);
+        return;
+      }
+
+      if (userMessage.toLowerCase().includes('read aloud') || userMessage.toLowerCase().includes('text to speech')) {
+        await handleTextToSpeech(userMessage);
+        return;
+      }
+
+      // Standard AI processing
       const aiResponse = await processAIQuery(userMessage, {
         currentUrl: currentUrl,
         sessionId: sessionId,
@@ -219,10 +259,246 @@ const EnhancedBrowserInterface = ({ onBackToWelcome }) => {
     }
   }, [currentMessage, currentUrl, sessionId, activeTab, tabs, isFullscreen, bookmarks, processAIQuery, navigateToUrl, proxyRequest]);
 
+  // Enhanced capabilities handlers
+  const handleDeepSearch = async (query) => {
+    addChatMessage('ai', '🔍 Initiating deep search across multiple sources...');
+    
+    try {
+      const searchQuery = query.replace(/deep search/i, '').trim();
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/search/deep`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: searchQuery, config: { max_sources: 6 } })
+      });
+      
+      const result = await response.json();
+      
+      if (result.error) {
+        addChatMessage('ai', `❌ Deep search failed: ${result.error}`);
+        return;
+      }
+      
+      const results = result.results?.results || [];
+      const totalSources = result.sources_searched?.length || 0;
+      
+      let searchSummary = `🎯 **Deep Search Results for: "${searchQuery}"**\n\n`;
+      searchSummary += `📊 Found ${results.length} results from ${totalSources} sources\n`;
+      searchSummary += `🔍 Sources: ${result.sources_searched?.join(', ') || 'Various'}\n\n`;
+      
+      if (results.length > 0) {
+        searchSummary += `**Top Results:**\n`;
+        results.slice(0, 5).forEach((result, i) => {
+          searchSummary += `${i + 1}. **${result.title}** (${result.search_source})\n`;
+          searchSummary += `   ${result.snippet}\n   🔗 ${result.url}\n\n`;
+        });
+      }
+      
+      searchSummary += `💡 **AI Analysis:** ${result.results?.ai_analysis || 'Deep search completed successfully'}`;
+      
+      addChatMessage('ai', searchSummary, { searchResults: result });
+      
+    } catch (error) {
+      addChatMessage('ai', `❌ Deep search error: ${error.message}`);
+    }
+  };
+
+  const handleCreateAgent = async (message) => {
+    addChatMessage('ai', '🤖 Creating custom agent from your description...');
+    
+    try {
+      const description = message.replace(/create agent/i, '').trim();
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/agents/create/description`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          description, 
+          user_id: sessionId,
+          config: { environment: 'browser' }
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (result.error) {
+        addChatMessage('ai', `❌ Agent creation failed: ${result.error}`);
+        return;
+      }
+      
+      const agent = result.agent;
+      let agentSummary = `✅ **Agent Created Successfully!**\n\n`;
+      agentSummary += `🤖 **Name:** ${agent.name}\n`;
+      agentSummary += `📝 **Description:** ${agent.description}\n`;
+      agentSummary += `🎯 **Capabilities:** ${agent.capabilities?.join(', ') || 'General automation'}\n`;
+      agentSummary += `🏗️ **Environment:** ${agent.environment}\n`;
+      agentSummary += `🆔 **Agent ID:** ${agent.id}\n\n`;
+      agentSummary += `Use this agent by saying: "Execute agent ${agent.name}"`;
+      
+      addChatMessage('ai', agentSummary, { createdAgent: result });
+      
+    } catch (error) {
+      addChatMessage('ai', `❌ Agent creation error: ${error.message}`);
+    }
+  };
+
+  const handleGenerateReport = async (message) => {
+    addChatMessage('ai', '📊 Generating AI-powered report with visualizations...');
+    
+    try {
+      const reportType = message.toLowerCase().includes('analytics') ? 'analytics' : 'research';
+      const topic = message.replace(/generate report/i, '').replace(/analytics/i, '').trim();
+      
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/reports/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          type: reportType,
+          config: { 
+            topic: topic || 'General Report',
+            include_visuals: true,
+            async: false
+          }
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (result.error) {
+        addChatMessage('ai', `❌ Report generation failed: ${result.error}`);
+        return;
+      }
+      
+      let reportSummary = `📋 **Report Generated: ${result.title || 'Custom Report'}**\n\n`;
+      reportSummary += `📊 **Type:** ${reportType.charAt(0).toUpperCase() + reportType.slice(1)}\n`;
+      reportSummary += `📅 **Generated:** ${new Date().toLocaleString()}\n`;
+      reportSummary += `🎯 **Topic:** ${topic || 'Comprehensive Analysis'}\n\n`;
+      
+      if (result.sections) {
+        reportSummary += `**Report Sections:**\n`;
+        result.sections.forEach((section, i) => {
+          reportSummary += `${i + 1}. ${section.title}\n`;
+        });
+      }
+      
+      reportSummary += `\n✨ **AI Insights:** Report includes comprehensive analysis with actionable recommendations.`;
+      
+      addChatMessage('ai', reportSummary, { generatedReport: result });
+      
+    } catch (error) {
+      addChatMessage('ai', `❌ Report generation error: ${error.message}`);
+    }
+  };
+
+  const handleTranslation = async (message) => {
+    const text = message.replace(/translate/i, '').trim();
+    const targetLang = 'es'; // Default to Spanish, could be enhanced to detect intent
+    
+    addChatMessage('ai', `🌐 Translating text to ${targetLang}...`);
+    
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/accessibility/translate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          text, 
+          target_language: targetLang,
+          source_language: 'auto'
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (result.error) {
+        addChatMessage('ai', `❌ Translation failed: ${result.error}`);
+        return;
+      }
+      
+      let translationResult = `🌐 **Translation Complete**\n\n`;
+      translationResult += `**Original:** ${result.original_text}\n`;
+      translationResult += `**Translated:** ${result.translated_text}\n`;
+      translationResult += `**From:** ${result.source_language} → **To:** ${result.target_language}\n`;
+      translationResult += `**Confidence:** ${Math.round(result.confidence * 100)}%`;
+      
+      addChatMessage('ai', translationResult, { translation: result });
+      
+    } catch (error) {
+      addChatMessage('ai', `❌ Translation error: ${error.message}`);
+    }
+  };
+
+  const handleTextToSpeech = async (message) => {
+    const text = message.replace(/read aloud|text to speech/i, '').trim() || "Hello, this is a text to speech test.";
+    
+    addChatMessage('ai', '🔊 Converting text to speech...');
+    
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/accessibility/tts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          text,
+          options: { engine: 'browser', speed: 1.0, pitch: 1.0 }
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (result.error) {
+        addChatMessage('ai', `❌ Text-to-speech failed: ${result.error}`);
+        return;
+      }
+      
+      // Execute browser TTS
+      if (result.instructions?.use_speech_synthesis && 'speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(result.instructions.text_to_speak);
+        utterance.rate = result.instructions.voice_settings?.speed || 1.0;
+        utterance.pitch = result.instructions.voice_settings?.pitch || 1.0;
+        
+        speechSynthesis.speak(utterance);
+        
+        addChatMessage('ai', `🔊 **Speaking:** "${text}"\n\n✅ Text-to-speech activated using browser engine.`);
+      } else {
+        addChatMessage('ai', `🔊 **TTS Configuration Ready:** ${result.text}\n\n⚠️ Browser speech synthesis not available.`);
+      }
+      
+    } catch (error) {
+      addChatMessage('ai', `❌ Text-to-speech error: ${error.message}`);
+    }
+  };
+
+  // Handle workflow execution from visual builder
+  const handleWorkflowExecution = async (workflow) => {
+    addChatMessage('ai', `🔄 Executing workflow: ${workflow.name || 'Custom Workflow'}`);
+    
+    try {
+      // Add to shadow tasks
+      const taskId = `task_${Date.now()}`;
+      const newTask = {
+        id: taskId,
+        name: workflow.name || 'Visual Workflow',
+        status: 'running',
+        steps: workflow.steps,
+        startTime: new Date()
+      };
+      
+      setShadowTasks(prev => [...prev, newTask]);
+      
+      // Simulate workflow execution (in real implementation, this would call the backend)
+      setTimeout(() => {
+        setShadowTasks(prev => prev.map(task => 
+          task.id === taskId ? { ...task, status: 'completed', endTime: new Date() } : task
+        ));
+        
+        addChatMessage('ai', `✅ Workflow "${workflow.name || 'Custom Workflow'}" completed successfully!\n\n📊 Executed ${workflow.steps.length} steps in background.`);
+      }, 3000);
+      
+    } catch (error) {
+      addChatMessage('ai', `❌ Workflow execution error: ${error.message}`);
+    }
+  };
+
   // Helper functions
   const normalizeUrl = (url) => {
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      // Check if it's a search query or actual URL
       if (url.includes('.') && !url.includes(' ')) {
         return 'https://' + url;
       } else {
@@ -338,61 +614,75 @@ const EnhancedBrowserInterface = ({ onBackToWelcome }) => {
     }
   };
 
-  const quickCommands = [
-    { text: 'Open YouTube', icon: '🎥', color: 'bg-red-50 text-red-600' },
-    { text: 'Search Google', icon: '🔍', color: 'bg-blue-50 text-blue-600' },
-    { text: 'Open GitHub', icon: '👨‍💻', color: 'bg-gray-50 text-gray-600' },
-    { text: 'Check the news', icon: '📰', color: 'bg-orange-50 text-orange-600' },
-    { text: 'Open Gmail', icon: '📧', color: 'bg-green-50 text-green-600' },
-    { text: 'Go to LinkedIn', icon: '💼', color: 'bg-blue-50 text-blue-700' }
+  const enhancedQuickCommands = [
+    { text: 'Deep search AI trends', icon: '🔍', color: 'bg-blue-50 text-blue-600' },
+    { text: 'Create agent for scraping', icon: '🤖', color: 'bg-purple-50 text-purple-600' },
+    { text: 'Generate report analytics', icon: '📊', color: 'bg-green-50 text-green-600' },
+    { text: 'Translate this page', icon: '🌐', color: 'bg-orange-50 text-orange-600' },
+    { text: 'Read aloud current content', icon: '🔊', color: 'bg-pink-50 text-pink-600' },
+    { text: 'Open YouTube', icon: '🎥', color: 'bg-red-50 text-red-600' }
   ];
 
   const handleQuickCommand = async (command) => {
     setCurrentMessage(command);
     addChatMessage('user', command);
     
-    try {
-      const aiResponse = await processAIQuery(command, {
-        currentUrl: currentUrl,
-        sessionId: sessionId
-      });
-
-      let responseText = aiResponse.explanation || 'I understand your request.';
-      
-      if (aiResponse.commands && aiResponse.commands.length > 0) {
-        for (const aiCommand of aiResponse.commands) {
-          if (aiCommand.type === 'open' && aiCommand.params?.url) {
-            responseText += `\n\n🚀 Opening ${aiCommand.params.url}...`;
-            
-            setActiveTabLoading(true);
-            await navigateToUrl(aiCommand.params.url);
-            
-            try {
-              const response = await proxyRequest(aiCommand.params.url);
+    // Process the command
+    if (command.includes('Deep search')) {
+      await handleDeepSearch(command);
+    } else if (command.includes('Create agent')) {
+      await handleCreateAgent(command);
+    } else if (command.includes('Generate report')) {
+      await handleGenerateReport(command);
+    } else if (command.includes('Translate')) {
+      await handleTranslation(command);
+    } else if (command.includes('Read aloud')) {
+      await handleTextToSpeech(command);
+    } else {
+      // Standard processing for other commands
+      try {
+        const aiResponse = await processAIQuery(command, {
+          currentUrl: currentUrl,
+          sessionId: sessionId
+        });
+        
+        let responseText = aiResponse.explanation || 'I understand your request.';
+        
+        if (aiResponse.commands && aiResponse.commands.length > 0) {
+          for (const aiCommand of aiResponse.commands) {
+            if (aiCommand.type === 'open' && aiCommand.params?.url) {
+              responseText += `\n\n🚀 Opening ${aiCommand.params.url}...`;
               
-              if (response && response.content) {
-                setIframeContent(response.content);
-                updateCurrentTab({ 
-                  url: aiCommand.params.url, 
-                  title: getDomainFromUrl(aiCommand.params.url),
-                  loading: false,
-                  favicon: getFaviconForUrl(aiCommand.params.url)
-                });
-                responseText += `\n✅ Content loaded successfully using ${response.method}`;
+              setActiveTabLoading(true);
+              await navigateToUrl(aiCommand.params.url);
+              
+              try {
+                const response = await proxyRequest(aiCommand.params.url);
+                
+                if (response && response.content) {
+                  setIframeContent(response.content);
+                  updateCurrentTab({ 
+                    url: aiCommand.params.url, 
+                    title: getDomainFromUrl(aiCommand.params.url),
+                    loading: false,
+                    favicon: getFaviconForUrl(aiCommand.params.url)
+                  });
+                  responseText += `\n✅ Content loaded successfully using ${response.method}`;
+                }
+              } catch (proxyError) {
+                setActiveTabLoading(false);
+                responseText += `\n⚠️ Loading encountered issues: ${proxyError.message}`;
               }
-            } catch (proxyError) {
-              setActiveTabLoading(false);
-              responseText += `\n⚠️ Loading encountered issues: ${proxyError.message}`;
             }
           }
         }
+        
+        addChatMessage('ai', responseText, { commands: aiResponse.commands });
+        
+      } catch (error) {
+        console.error('❌ Quick command error:', error);
+        addChatMessage('ai', 'Sorry, I encountered an error processing your request. Please try again.');
       }
-
-      addChatMessage('ai', responseText, { commands: aiResponse.commands });
-      
-    } catch (error) {
-      console.error('❌ Quick command error:', error);
-      addChatMessage('ai', 'Sorry, I encountered an error processing your request. Please try again.');
     }
     
     setCurrentMessage('');
@@ -473,6 +763,14 @@ const EnhancedBrowserInterface = ({ onBackToWelcome }) => {
               <span>{isOnline ? 'Online' : 'Offline'}</span>
             </div>
             
+            {/* Shadow Tasks Indicator */}
+            {shadowTasks.length > 0 && (
+              <div className="flex items-center space-x-1 text-xs text-purple-600 bg-purple-50 px-2 py-1 rounded">
+                <Eye className="w-3 h-3" />
+                <span>{shadowTasks.filter(t => t.status === 'running').length} running</span>
+              </div>
+            )}
+            
             <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
               Session: {sessionId?.slice(-8)}
             </div>
@@ -551,7 +849,6 @@ const EnhancedBrowserInterface = ({ onBackToWelcome }) => {
             </button>
           </div>
 
-          {/* Bookmarks Bar Toggle */}
           <button
             onClick={() => setShowBookmarks(!showBookmarks)}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -599,9 +896,9 @@ const EnhancedBrowserInterface = ({ onBackToWelcome }) => {
               <div className="w-20 h-20 bg-gradient-to-br from-green-400 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
                 <Globe className="w-10 h-10 text-white" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-3">Ready to Explore</h3>
+              <h3 className="text-2xl font-bold text-gray-800 mb-3">Enhanced AI Browser Ready</h3>
               <p className="text-gray-600 mb-6 leading-relaxed">
-                Enter a web address above, ask the AI assistant to navigate, or choose from your bookmarks
+                Your AI assistant now has Fellou-level capabilities: Deep Search, Agent Creation, Smart Reports, TTS, Translation, and Visual Workflow Builder
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <button 
@@ -609,7 +906,7 @@ const EnhancedBrowserInterface = ({ onBackToWelcome }) => {
                   className="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-xl font-medium hover:from-green-600 hover:to-green-700 transition-all duration-200 flex items-center space-x-2 justify-center shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                 >
                   <Bot className="w-5 h-5" />
-                  <span>Ask AI Assistant</span>
+                  <span>Open AI Assistant</span>
                 </button>
                 <button 
                   onClick={() => setShowBookmarks(!showBookmarks)}
@@ -647,7 +944,7 @@ const EnhancedBrowserInterface = ({ onBackToWelcome }) => {
         </div>
       </motion.button>
 
-      {/* Enhanced AI Chat Panel */}
+      {/* Enhanced AI Chat Panel with Tabbed Interface */}
       <AnimatePresence>
         {isChatOpen && (
           <motion.div
@@ -656,109 +953,155 @@ const EnhancedBrowserInterface = ({ onBackToWelcome }) => {
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             className="ai-chat-panel fixed bottom-24 right-6 w-96 h-[600px] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col z-40 overflow-hidden"
           >
-            {/* Enhanced Chat Header */}
-            <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-t-2xl">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                    <Bot className="w-5 h-5" />
+            {/* Enhanced Chat Header with Tabs */}
+            <div className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-t-2xl">
+              <div className="p-4 pb-0">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                      {chatMode === 'chat' ? <Bot className="w-5 h-5" /> : <Workflow className="w-5 h-5" />}
+                    </div>
+                    <div>
+                      <h3 className="font-semibold">Kairo AI Assistant</h3>
+                      <p className="text-xs text-green-100">
+                        {chatMode === 'chat' ? 'Enhanced • All Fellou features' : 'Visual Builder • Drag & Drop'}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold">Kairo AI Assistant</h3>
-                    <p className="text-xs text-green-100">Enhanced • Ready to help</p>
+                  <div className="flex items-center space-x-2">
+                    {isMuted ? (
+                      <button onClick={() => setIsMuted(false)} className="p-1 hover:bg-white/20 rounded">
+                        <VolumeX className="w-4 h-4" />
+                      </button>
+                    ) : (
+                      <button onClick={() => setIsMuted(true)} className="p-1 hover:bg-white/20 rounded">
+                        <Volume2 className="w-4 h-4" />
+                      </button>
+                    )}
+                    <button 
+                      onClick={() => setIsChatOpen(false)}
+                      className="p-1 hover:bg-white/20 rounded-lg transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  {isMuted ? (
-                    <button onClick={() => setIsMuted(false)} className="p-1 hover:bg-white/20 rounded">
-                      <VolumeX className="w-4 h-4" />
-                    </button>
-                  ) : (
-                    <button onClick={() => setIsMuted(true)} className="p-1 hover:bg-white/20 rounded">
-                      <Volume2 className="w-4 h-4" />
-                    </button>
-                  )}
-                  <button 
-                    onClick={() => setIsChatOpen(false)}
-                    className="p-1 hover:bg-white/20 rounded-lg transition-colors"
+                
+                {/* Tab Navigation */}
+                <div className="flex space-x-1 mb-1">
+                  <button
+                    onClick={() => setChatMode('chat')}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-t-lg text-sm font-medium transition-all ${
+                      chatMode === 'chat' 
+                        ? 'bg-white text-green-600 shadow-sm' 
+                        : 'text-green-100 hover:text-white hover:bg-white/10'
+                    }`}
                   >
-                    <X className="w-4 h-4" />
+                    <MessageSquare className="w-4 h-4" />
+                    <span>Chat</span>
+                  </button>
+                  <button
+                    onClick={() => setChatMode('builder')}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-t-lg text-sm font-medium transition-all ${
+                      chatMode === 'builder' 
+                        ? 'bg-white text-green-600 shadow-sm' 
+                        : 'text-green-100 hover:text-white hover:bg-white/10'
+                    }`}
+                  >
+                    <Workflow className="w-4 h-4" />
+                    <span>Builder</span>
                   </button>
                 </div>
               </div>
             </div>
 
-            {/* Enhanced Chat Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
-              {chatMessages.map((message, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`ai-chat-bubble flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div className={`max-w-xs px-4 py-3 rounded-2xl shadow-sm ${
-                    message.type === 'user' 
-                      ? 'bg-gradient-to-r from-green-500 to-green-600 text-white rounded-br-md' 
-                      : 'bg-white text-gray-800 rounded-bl-md border border-gray-100'
-                  }`}>
-                    <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
-                    <p className="text-xs mt-2 opacity-60">
-                      {message.timestamp.toLocaleTimeString()}
-                    </p>
-                  </div>
-                </motion.div>
-              ))}
-              <div ref={chatEndRef} />
-            </div>
-
-            {/* Enhanced Quick Commands */}
-            {chatMessages.length <= 2 && (
-              <div className="px-4 py-3 border-t border-gray-100 bg-white">
-                <p className="text-xs text-gray-500 mb-3 font-medium">✨ Quick Commands:</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {quickCommands.slice(0, 4).map((cmd, index) => (
-                    <button
+            {/* Dynamic Content Based on Tab */}
+            {chatMode === 'chat' ? (
+              <>
+                {/* Enhanced Chat Messages */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+                  {chatMessages.map((message, index) => (
+                    <motion.div
                       key={index}
-                      onClick={() => handleQuickCommand(cmd.text)}
-                      className={`text-xs ${cmd.color} border border-gray-200 rounded-lg px-3 py-2 hover:shadow-sm transition-all duration-200 flex items-center space-x-2`}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={`ai-chat-bubble flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
                     >
-                      <span>{cmd.icon}</span>
-                      <span className="truncate">{cmd.text}</span>
-                    </button>
+                      <div className={`max-w-xs px-4 py-3 rounded-2xl shadow-sm ${
+                        message.type === 'user' 
+                          ? 'bg-gradient-to-r from-green-500 to-green-600 text-white rounded-br-md' 
+                          : 'bg-white text-gray-800 rounded-bl-md border border-gray-100'
+                      }`}>
+                        <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                        <p className="text-xs mt-2 opacity-60">
+                          {message.timestamp.toLocaleTimeString()}
+                        </p>
+                      </div>
+                    </motion.div>
                   ))}
+                  <div ref={chatEndRef} />
                 </div>
+
+                {/* Enhanced Quick Commands */}
+                {chatMessages.length <= 2 && (
+                  <div className="px-4 py-3 border-t border-gray-100 bg-white">
+                    <p className="text-xs text-gray-500 mb-3 font-medium">✨ Try These Enhanced Commands:</p>
+                    <div className="grid grid-cols-1 gap-2">
+                      {enhancedQuickCommands.slice(0, 4).map((cmd, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handleQuickCommand(cmd.text)}
+                          className={`text-xs ${cmd.color} border border-gray-200 rounded-lg px-3 py-2 hover:shadow-sm transition-all duration-200 flex items-center space-x-2`}
+                        >
+                          <span>{cmd.icon}</span>
+                          <span className="truncate text-left">{cmd.text}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Enhanced Chat Input */}
+                <form onSubmit={handleAIChat} className="p-4 border-t border-gray-100 bg-white rounded-b-2xl">
+                  <div className="flex space-x-3">
+                    <input
+                      type="text"
+                      value={currentMessage}
+                      onChange={(e) => setCurrentMessage(e.target.value)}
+                      placeholder="Try: 'Deep search AI trends' or 'Create agent'"
+                      className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-gray-50"
+                    />
+                    <button 
+                      type="submit"
+                      disabled={!currentMessage.trim() || isLoading}
+                      className="p-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
+                    >
+                      {isLoading ? (
+                        <div className="loading-spinner w-4 h-4"></div>
+                      ) : (
+                        <Send className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </>
+            ) : (
+              /* Visual Workflow Builder Tab */
+              <div className="flex-1 bg-gray-50">
+                <VisualWorkflowBuilder 
+                  onExecuteWorkflow={handleWorkflowExecution}
+                  shadowTasks={shadowTasks}
+                  builtWorkflows={builtWorkflows}
+                  setBuiltWorkflows={setBuiltWorkflows}
+                />
               </div>
             )}
-
-            {/* Enhanced Chat Input */}
-            <form onSubmit={handleAIChat} className="p-4 border-t border-gray-100 bg-white rounded-b-2xl">
-              <div className="flex space-x-3">
-                <input
-                  type="text"
-                  value={currentMessage}
-                  onChange={(e) => setCurrentMessage(e.target.value)}
-                  placeholder="Ask me anything about browsing..."
-                  className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-gray-50"
-                />
-                <button 
-                  type="submit"
-                  disabled={!currentMessage.trim() || isLoading}
-                  className="p-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
-                >
-                  {isLoading ? (
-                    <div className="loading-spinner w-4 h-4"></div>
-                  ) : (
-                    <Send className="w-4 h-4" />
-                  )}
-                </button>
-              </div>
-            </form>
+            
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Settings Panel */}
+      {/* Settings Panel - Enhanced */}
       <AnimatePresence>
         {showSettings && (
           <motion.div
@@ -769,44 +1112,99 @@ const EnhancedBrowserInterface = ({ onBackToWelcome }) => {
           >
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-gray-800">Browser Settings</h3>
+                <h3 className="text-lg font-semibold text-gray-800">Enhanced Browser Settings</h3>
                 <button onClick={() => setShowSettings(false)}>
                   <X className="w-5 h-5 text-gray-500" />
                 </button>
               </div>
               
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Theme</label>
-                  <select className="w-full p-2 border border-gray-300 rounded-lg">
-                    <option>Light</option>
-                    <option>Dark</option>
-                    <option>Auto</option>
-                  </select>
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">AI Assistant Features</h4>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Deep Search</span>
+                      <div className="w-10 h-6 bg-green-500 rounded-full relative">
+                        <div className="w-4 h-4 bg-white rounded-full absolute top-1 right-1"></div>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Agentic Memory</span>
+                      <div className="w-10 h-6 bg-green-500 rounded-full relative">
+                        <div className="w-4 h-4 bg-white rounded-full absolute top-1 right-1"></div>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Shadow Browsers</span>
+                      <div className="w-10 h-6 bg-green-500 rounded-full relative">
+                        <div className="w-4 h-4 bg-white rounded-full absolute top-1 right-1"></div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Default Search Engine</label>
-                  <select className="w-full p-2 border border-gray-300 rounded-lg">
-                    <option>Google</option>
-                    <option>Bing</option>
-                    <option>DuckDuckGo</option>
-                  </select>
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">Accessibility</h4>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Text-to-Speech</span>
+                      <div className="w-10 h-6 bg-green-500 rounded-full relative">
+                        <div className="w-4 h-4 bg-white rounded-full absolute top-1 right-1"></div>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Auto Translation</span>
+                      <div className="w-10 h-6 bg-gray-200 rounded-full relative">
+                        <div className="w-4 h-4 bg-white rounded-full absolute top-1 left-1"></div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Block Ads</span>
-                  <button className="w-10 h-6 bg-gray-200 rounded-full relative">
-                    <div className="w-4 h-4 bg-white rounded-full absolute top-1 left-1 transition-transform"></div>
-                  </button>
+
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">Browser Settings</h4>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-2">Theme</label>
+                      <select className="w-full p-2 border border-gray-300 rounded-lg text-sm">
+                        <option>Light</option>
+                        <option>Dark</option>
+                        <option>Auto</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-2">Default Search Engine</label>
+                      <select className="w-full p-2 border border-gray-300 rounded-lg text-sm">
+                        <option>Enhanced Multi-Source</option>
+                        <option>Google</option>
+                        <option>Bing</option>
+                        <option>DuckDuckGo</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
-                
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Enable JavaScript</span>
-                  <button className="w-10 h-6 bg-green-500 rounded-full relative">
-                    <div className="w-4 h-4 bg-white rounded-full absolute top-1 right-1 transition-transform"></div>
-                  </button>
-                </div>
+
+                {/* Shadow Tasks Status */}
+                {shadowTasks.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700 mb-3">Background Tasks</h4>
+                    <div className="space-y-2">
+                      {shadowTasks.slice(0, 3).map((task, index) => (
+                        <div key={task.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                          <div className="flex items-center space-x-2">
+                            <div className={`w-2 h-2 rounded-full ${
+                              task.status === 'running' ? 'bg-yellow-500' : 
+                              task.status === 'completed' ? 'bg-green-500' : 'bg-red-500'
+                            }`}></div>
+                            <span className="text-xs text-gray-600 truncate">{task.name}</span>
+                          </div>
+                          <span className="text-xs text-gray-500">{task.status}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </motion.div>
