@@ -16,6 +16,7 @@ from services.real_interaction_engine import real_interaction_engine
 from services.advanced_rendering_service import advanced_rendering_engine
 from services.bulletproof_fallback_system import bulletproof_fallback_system
 from services.stealth_engine_service import stealth_engine
+from services.ultimate_youtube_service import ultimate_youtube_service
 
 logger = logging.getLogger(__name__)
 
