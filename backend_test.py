@@ -28,6 +28,8 @@ class UltimateKairoAPITester:
         else:
             self.failed_tests.append(f"{name}: {details}")
             print(f"❌ {name} - FAILED: {details}")
+            if details:
+                print(f"   Error Details: {details}")
     
     def make_request(self, method: str, endpoint: str, data: Dict[str, Any] = None, timeout: int = 30) -> tuple:
         """Make HTTP request and return success status and response"""
