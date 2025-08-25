@@ -107,9 +107,13 @@ const BrowserInterface = ({ onBackToWelcome }) => {
             
             // Load content via enhanced proxy system
             try {
+              console.log(`🔍 Attempting to load content for: ${command.params.url}`);
               const response = await proxyRequest(command.params.url);
-              if (response.content) {
-                console.log(`Content loaded using ${response.method} for ${command.params.url}`);
+              console.log(`📡 Proxy response received:`, response);
+              
+              if (response && response.content) {
+                console.log(`✅ Content loaded using ${response.method} for ${command.params.url}`);
+                console.log(`📄 Content length: ${response.content.length} characters`);
                 setIframeContent(response.content);
                 
                 // Update response text with method info
@@ -117,11 +121,16 @@ const BrowserInterface = ({ onBackToWelcome }) => {
                   responseText += `\n✅ Loaded using enhanced browser engine with anti-detection`;
                 } else if (response.method === 'enhanced_http_proxy') {
                   responseText += `\n✅ Loaded using enhanced HTTP proxy`;
+                } else {
+                  responseText += `\n✅ Loaded using ${response.method}`;
                 }
+              } else {
+                console.error('❌ No content in proxy response:', response);
+                responseText += `\n⚠️ Received response but no content found`;
               }
             } catch (proxyError) {
-              console.error('All proxy methods failed:', proxyError);
-              responseText += `\n⚠️ Unable to load content directly. This may be due to site restrictions.`;
+              console.error('❌ All proxy methods failed:', proxyError);
+              responseText += `\n⚠️ Unable to load content directly. Error: ${proxyError.message}`;
             }
           }
         }
