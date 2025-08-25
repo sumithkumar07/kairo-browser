@@ -58,9 +58,10 @@ const BrowserInterface = ({ onBackToWelcome }) => {
     try {
       await navigateToUrl(urlInput);
       
-      // Load content via proxy for display
+      // Load content via enhanced proxy system for display
       const response = await proxyRequest(urlInput);
       if (response.content) {
+        console.log(`Direct navigation loaded using ${response.method}`);
         setIframeContent(response.content);
       }
       
