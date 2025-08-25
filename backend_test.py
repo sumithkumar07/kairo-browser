@@ -122,27 +122,26 @@ class UltimateKairoAPITester:
         success, response = self.make_request('POST', '/ultimate/proxy', ultimate_request, timeout=60)
         self.log_test("Ultimate Proxy - Wikipedia", success, str(response.get('error', '')) if not success else "")
 
-    def test_agent_builder_endpoints(self):
-        """Test agent builder capabilities"""
-        print("\n🤖 Testing Agent Builder Endpoints...")
+    def test_enhanced_proxy_endpoints(self):
+        """Test enhanced proxy capabilities"""
+        print("\n🔄 Testing Enhanced Proxy Endpoints...")
         
-        # Create agent from description
-        agent_request = {
-            "description": "Create an agent that scrapes product prices from e-commerce sites",
-            "user_id": "test_user_123",
-            "config": {"timeout": 30}
+        # Enhanced proxy
+        proxy_request = {
+            "url": "https://httpbin.org/get",
+            "method": "GET"
         }
         
-        success, response = self.make_request('POST', '/agents/create/description', agent_request)
-        self.log_test("Create Agent from Description", success, str(response.get('error', '')) if not success else "")
+        success, response = self.make_request('POST', '/proxy/enhanced', proxy_request)
+        self.log_test("Enhanced Proxy", success, str(response.get('error', '')) if not success else "")
         
-        # List user agents
-        success, response = self.make_request('GET', '/agents/user/test_user_123')
-        self.log_test("List User Agents", success, str(response.get('error', '')) if not success else "")
+        # Browser proxy with Playwright
+        success, response = self.make_request('POST', '/proxy/browser', proxy_request)
+        self.log_test("Browser Proxy (Playwright)", success, str(response.get('error', '')) if not success else "")
         
-        # Get agent marketplace
-        success, response = self.make_request('GET', '/agents/marketplace')
-        self.log_test("Agent Marketplace", success, str(response.get('error', '')) if not success else "")
+        # Basic proxy
+        success, response = self.make_request('POST', '/proxy', proxy_request)
+        self.log_test("Basic HTTP Proxy", success, str(response.get('error', '')) if not success else "")
 
     def test_report_generation_endpoints(self):
         """Test report generation capabilities"""
