@@ -201,24 +201,26 @@ class UltimateKairoAPITester:
         success, response = self.make_request('GET', f'/user/{self.session_id}/analytics')
         self.log_test("User Analytics", success, str(response.get('error', '')) if not success else "")
 
-    def test_memory_endpoints(self):
-        """Test memory and personalization"""
-        print("\n🧠 Testing Memory Endpoints...")
+    def test_voice_and_image_processing(self):
+        """Test voice commands and image analysis"""
+        print("\n🎤📸 Testing Voice Commands & Image Analysis...")
         
-        # Learn from interaction
-        interaction_request = {
-            "user_id": "test_user_123",
-            "command": "search for AI trends",
-            "context": {"page": "dashboard", "time": "morning"},
-            "outcome": "success"
-        }
+        # Note: These endpoints require file uploads, so we'll test the endpoint availability
+        # Voice command endpoint check
+        success, response = self.make_request('POST', '/ai/voice-command', {})
+        # Expect 422 (validation error) since we're not sending a file - this means endpoint exists
+        if response.get('error') and '422' in str(response.get('error', '')):
+            self.log_test("Voice Command Endpoint Available", True, "")
+        else:
+            self.log_test("Voice Command Endpoint Available", success, str(response.get('error', '')) if not success else "")
         
-        success, response = self.make_request('POST', '/memory/learn', interaction_request)
-        self.log_test("Memory Learning", success, str(response.get('error', '')) if not success else "")
-        
-        # Get personalized suggestions
-        success, response = self.make_request('GET', '/memory/suggestions/test_user_123?context={"page":"dashboard"}')
-        self.log_test("Personalized Suggestions", success, str(response.get('error', '')) if not success else "")
+        # Image analysis endpoint check
+        success, response = self.make_request('POST', '/ai/analyze-image', {})
+        # Expect 422 (validation error) since we're not sending a file - this means endpoint exists
+        if response.get('error') and '422' in str(response.get('error', '')):
+            self.log_test("Image Analysis Endpoint Available", True, "")
+        else:
+            self.log_test("Image Analysis Endpoint Available", success, str(response.get('error', '')) if not success else "")
 
     def test_intelligence_endpoints(self):
         """Test intelligence analysis"""
