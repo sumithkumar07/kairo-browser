@@ -22,6 +22,8 @@ function App() {
               element={
                 currentView === 'welcome' ? 
                 <WelcomePage onStartBrowsing={() => setCurrentView('browser')} /> :
+                useUltimateUI ? 
+                <UltimateEnhancedBrowserInterface onBackToWelcome={() => setCurrentView('welcome')} /> :
                 useEnhancedUI ? 
                 <EnhancedBrowserInterface onBackToWelcome={() => setCurrentView('welcome')} /> :
                 <BrowserInterface onBackToWelcome={() => setCurrentView('welcome')} />
@@ -30,6 +32,8 @@ function App() {
             <Route 
               path="/browser" 
               element={
+                useUltimateUI ? 
+                <UltimateEnhancedBrowserInterface onBackToWelcome={() => setCurrentView('welcome')} /> :
                 useEnhancedUI ? 
                 <EnhancedBrowserInterface onBackToWelcome={() => setCurrentView('welcome')} /> :
                 <BrowserInterface onBackToWelcome={() => setCurrentView('welcome')} />
