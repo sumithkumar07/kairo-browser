@@ -201,7 +201,7 @@ class MilitaryGradeStealthEngine:
                 'use strict';
                 
                 // Profile-based fingerprint injection
-                const STEALTH_PROFILE = {json.dumps(profile)};
+                const STEALTH_PROFILE = {json.dumps(profile).replace('"', '\\"')};
                 const STEALTH_LEVEL = {level};
                 
                 // Complete webdriver removal (enhanced)
