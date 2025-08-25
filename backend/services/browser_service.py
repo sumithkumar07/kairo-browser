@@ -45,6 +45,8 @@ class BrowserService:
                 result.update(await self._handle_screenshot_command(session_id))
             elif command == "navigate":
                 result.update(await self._handle_navigate_command(url, session_id))
+            elif command == "youtube_video":
+                result.update(await self._handle_youtube_video_command(text, session_id))
             else:
                 result["status"] = "unknown_command"
                 result["error"] = f"Unknown command: {command}"
