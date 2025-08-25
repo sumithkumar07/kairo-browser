@@ -807,7 +807,40 @@ async def enhanced_http_proxy(request_data: Dict[str, Any]):
             if soup.head:
                 soup.head.append(enhanced_style)
             
-            # Add enhanced JavaScript compatibility layer
+            # Rewrite all links to go through our proxy system
+            for link in soup.find_all(['a', 'link']):
+                href = link.get('href')
+                if href and not href.startswith('#') and not href.startswith('javascript:'):
+                    if href.startswith('//'):
+                        href = 'https:' + href
+                    elif href.startswith('/'):
+                        from urllib.parse import urljoin
+                        href = urljoin(url, href)
+                    elif not href.startswith(('http:', 'https:')):
+                        from urllib.parse import urljoin
+                        href = urljoin(url, href)
+                    
+                    # Mark links to be intercepted by JavaScript
+                    link['data-proxy-url'] = href
+                    link['href'] = '#'
+            
+            # Rewrite form actions
+            for form in soup.find_all('form'):
+                action = form.get('action')
+                if action and not action.startswith('#') and not action.startswith('javascript:'):
+                    if action.startswith('//'):
+                        action = 'https:' + action
+                    elif action.startswith('/'):
+                        from urllib.parse import urljoin
+                        action = urljoin(url, action)
+                    elif not action.startswith(('http:', 'https:')):
+                        from urllib.parse import urljoin
+                        action = urljoin(url, action)
+                    
+                    form['data-proxy-action'] = action
+                    form['action'] = '#'
+
+            # Add enhanced JavaScript compatibility layer with link interception
             compat_script = soup.new_tag("script")
             compat_script.string = """
                 (function() {
@@ -834,23 +867,103 @@ async def enhanced_http_proxy(request_data: Dict[str, Any]):
                             configurable: false
                         });
                         
-                        // Prevent common redirect methods
+                        // Prevent window.open from breaking out of iframe
                         const originalOpen = window.open;
                         window.open = function(url, target, features) {
                             console.log('Kairo Browser: Intercepted window.open to', url);
-                            return originalOpen.call(window, url, target || '_blank', features);
+                            // Send message to parent to handle navigation within browser
+                            if (window.parent && window.parent.postMessage) {
+                                window.parent.postMessage({
+                                    type: 'NAVIGATE_TO',
+                                    url: url
+                                }, '*');
+                            }
+                            return null;
                         };
                         
-                        // Override location methods that could break iframe
+                        // Override location methods 
                         const originalReplace = window.location.replace;
                         window.location.replace = function(url) {
-                            console.log('Kairo Browser: Blocked location.replace to', url);
+                            console.log('Kairo Browser: Intercepted location.replace to', url);
+                            if (window.parent && window.parent.postMessage) {
+                                window.parent.postMessage({
+                                    type: 'NAVIGATE_TO', 
+                                    url: url
+                                }, '*');
+                            }
                         };
                         
                         const originalAssign = window.location.assign;
                         window.location.assign = function(url) {
-                            console.log('Kairo Browser: Blocked location.assign to', url);
+                            console.log('Kairo Browser: Intercepted location.assign to', url);
+                            if (window.parent && window.parent.postMessage) {
+                                window.parent.postMessage({
+                                    type: 'NAVIGATE_TO',
+                                    url: url
+                                }, '*');
+                            }
                         };
+                        
+                        // Intercept link clicks
+                        document.addEventListener('click', function(e) {
+                            var target = e.target;
+                            
+                            // Find the closest link element
+                            while (target && target.tagName !== 'A') {
+                                target = target.parentElement;
+                            }
+                            
+                            if (target && target.tagName === 'A') {
+                                var proxyUrl = target.getAttribute('data-proxy-url');
+                                if (proxyUrl) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    
+                                    console.log('Kairo Browser: Intercepted link click to', proxyUrl);
+                                    
+                                    // Send message to parent to handle navigation
+                                    if (window.parent && window.parent.postMessage) {
+                                        window.parent.postMessage({
+                                            type: 'NAVIGATE_TO',
+                                            url: proxyUrl
+                                        }, '*');
+                                    }
+                                }
+                            }
+                        }, true);
+                        
+                        // Intercept form submissions  
+                        document.addEventListener('submit', function(e) {
+                            var form = e.target;
+                            if (form && form.tagName === 'FORM') {
+                                var proxyAction = form.getAttribute('data-proxy-action');
+                                if (proxyAction) {
+                                    e.preventDefault();
+                                    
+                                    console.log('Kairo Browser: Intercepted form submission to', proxyAction);
+                                    
+                                    // Get form data
+                                    var formData = new FormData(form);
+                                    var params = new URLSearchParams();
+                                    for (var pair of formData.entries()) {
+                                        params.append(pair[0], pair[1]);
+                                    }
+                                    
+                                    var finalUrl = proxyAction;
+                                    if (form.method.toLowerCase() === 'get' && params.toString()) {
+                                        finalUrl += (proxyAction.includes('?') ? '&' : '?') + params.toString();
+                                    }
+                                    
+                                    // Send message to parent to handle navigation
+                                    if (window.parent && window.parent.postMessage) {
+                                        window.parent.postMessage({
+                                            type: 'NAVIGATE_TO',
+                                            url: finalUrl
+                                        }, '*');
+                                    }
+                                }
+                            }
+                        }, true);
                         
                         // Prevent document.domain manipulation
                         try {
@@ -860,6 +973,8 @@ async def enhanced_http_proxy(request_data: Dict[str, Any]):
                                 configurable: false
                             });
                         } catch (e) {}
+                        
+                        console.log('Kairo Browser: Enhanced navigation interception loaded');
                         
                     } catch (e) {
                         console.log('Kairo Browser compatibility script error:', e);
