@@ -1236,8 +1236,7 @@ const EnhancedBrowserInterface = ({ onBackToWelcome }) => {
                     </button>
                   </div>
                 </form>
-              </>
-            
+
           </motion.div>
         )}
       </AnimatePresence>
