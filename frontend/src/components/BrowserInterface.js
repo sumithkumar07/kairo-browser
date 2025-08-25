@@ -285,6 +285,13 @@ const BrowserInterface = ({ onBackToWelcome }) => {
 
       {/* Browser Content */}
       <main className="flex-1 relative bg-white">
+        {/* Debug info - remove in production */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="absolute top-2 left-2 bg-yellow-200 p-2 text-xs rounded z-50">
+            Content loaded: {iframeContent ? 'YES' : 'NO'} ({iframeContent ? iframeContent.length : 0} chars)
+          </div>
+        )}
+        
         {iframeContent ? (
           <div className="w-full h-full relative">
             <div 
