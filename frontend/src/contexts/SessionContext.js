@@ -130,10 +130,10 @@ export const SessionProvider = ({ children }) => {
   // Proxy request for loading external content
   const proxyRequest = async (url) => {
     try {
-      // For YouTube and other complex sites, use browser-based proxy
-      const isComplexSite = url.includes('youtube.com') || url.includes('facebook.com') || url.includes('twitter.com') || url.includes('instagram.com');
+      // For YouTube and other complex sites, use enhanced proxy
+      const isYouTube = url.includes('youtube.com');
       
-      const proxyEndpoint = isComplexSite ? `${API_BASE}/api/proxy/browser` : `${API_BASE}/api/proxy`;
+      const proxyEndpoint = isYouTube ? `${API_BASE}/api/proxy/enhanced` : `${API_BASE}/api/proxy`;
       
       const response = await axios.post(proxyEndpoint, { url });
       return response.data;
