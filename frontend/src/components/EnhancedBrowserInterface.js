@@ -61,7 +61,7 @@ const EnhancedBrowserInterface = ({ onBackToWelcome }) => {
   const [chatMessages, setChatMessages] = useState([
     {
       type: 'ai',
-      content: "👋 Hello! I'm your enhanced AI assistant with all Fellou-level capabilities:\n\n💬 **Chat Mode**: Natural language commands\n🎨 **Visual Builder**: Drag-and-drop workflows\n🔍 **Deep Search**: Multi-source intelligent search\n🧠 **Agentic Memory**: Learns from your behavior\n🤖 **Custom Agents**: Build agents with code or descriptions\n♿ **Accessibility Tools**: TTS, translation, layout adjustments\n📊 **Smart Reports**: AI-generated insights\n\nTry: 'Deep search AI trends' or switch to Visual Builder!",
+      content: "👋 Hello! I'm your enhanced AI assistant with powerful automation & workflow building capabilities:\n\n🔨 **Workflow Builder**: Create automation workflows through conversation\n💬 **Chat Commands**: Natural language for complex tasks\n🎨 **Visual Builder**: Drag-and-drop interface (Builder tab)\n🔍 **Deep Search**: Multi-source intelligent research\n🧠 **Smart Memory**: Learns from your patterns\n🤖 **Custom Agents**: Build specialized automation agents\n♿ **Accessibility**: TTS, translation, layout tools\n📊 **Smart Reports**: AI-generated insights & analytics\n\n**Try Building Workflows:**\n• \"Create a daily email routine\"\n• \"Build social media workflow\" \n• \"Automate competitor monitoring\"\n• \"Create morning routine workflow\"\n\nI'll help you build powerful automations through conversation! 🚀",
       timestamp: new Date()
     }
   ]);
