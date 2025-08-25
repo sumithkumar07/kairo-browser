@@ -20,13 +20,13 @@ const WelcomePage = ({ onStartBrowsing }) => {
       icon: Globe,
       iconBg: 'bg-green-100',
       iconColor: 'text-green-600',
-      title: 'Native Browser',
-      description: 'Full website functionality with real browser engine',
+      title: 'Enhanced Browser',
+      description: 'Advanced browser engine with multiple tabs, bookmarks, and modern features',
       details: [
-        'Complete web compatibility',
-        'JavaScript & CSS support', 
-        'Cookie & session management',
-        'Real-time page rendering'
+        'Multi-tab browsing support',
+        'Bookmark management', 
+        'Enhanced proxy routing',
+        'Fullscreen mode & settings'
       ]
     },
     {
