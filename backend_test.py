@@ -374,12 +374,221 @@ class KairoBackendTester:
             self.log_test("Browser Proxy", False, f"Exception: {str(e)}")
         return False
         
+    def test_integration_flow_youtube(self):
+        """Test complete integration flow: AI query → Browser command → Enhanced proxy → Content loading for YouTube"""
+        try:
+            integration_session = str(uuid.uuid4())
+            
+            # Step 1: AI Query Processing
+            ai_query = {
+                "query": "Open YouTube",
+                "session_id": integration_session
+            }
+            
+            response = self.session.post(f"{API_BASE}/ai/query", json=ai_query)
+            if response.status_code != 200:
+                self.log_test("Integration Flow YouTube - AI Query", False, f"AI query failed: {response.status_code}")
+                return False
+                
+            ai_data = response.json()
+            if "intent" not in ai_data and "commands" not in ai_data:
+                self.log_test("Integration Flow YouTube - AI Query", False, "AI response missing expected fields")
+                return False
+                
+            self.log_test("Integration Flow YouTube - AI Query", True, "AI processed YouTube request")
+            
+            # Step 2: Browser Command Execution
+            browser_command = {
+                "command": "open",
+                "url": "https://www.youtube.com",
+                "session_id": integration_session
+            }
+            
+            response = self.session.post(f"{API_BASE}/browser/execute", json=browser_command)
+            if response.status_code != 200:
+                self.log_test("Integration Flow YouTube - Browser Command", False, f"Browser command failed: {response.status_code}")
+                return False
+                
+            browser_data = response.json()
+            if browser_data.get("status") != "executed":
+                self.log_test("Integration Flow YouTube - Browser Command", False, "Browser command not executed")
+                return False
+                
+            self.log_test("Integration Flow YouTube - Browser Command", True, "Browser command executed")
+            
+            # Step 3: Enhanced Proxy Content Loading
+            proxy_request = {
+                "url": "https://www.youtube.com"
+            }
+            
+            response = self.session.post(f"{API_BASE}/proxy/enhanced", json=proxy_request, timeout=90)
+            if response.status_code != 200:
+                self.log_test("Integration Flow YouTube - Enhanced Proxy", False, f"Enhanced proxy failed: {response.status_code}")
+                return False
+                
+            proxy_data = response.json()
+            if "content" not in proxy_data or "method" not in proxy_data:
+                self.log_test("Integration Flow YouTube - Enhanced Proxy", False, "Proxy response missing content or method")
+                return False
+                
+            # Verify YouTube content was loaded
+            content = proxy_data.get("content", "")
+            if "youtube" not in content.lower() and "google" not in content.lower():
+                self.log_test("Integration Flow YouTube - Content Verification", False, "YouTube content not detected")
+                return False
+                
+            self.log_test("Integration Flow YouTube - Complete", True, 
+                        f"Full integration successful, method: {proxy_data.get('method')}")
+            return True
+            
+        except Exception as e:
+            self.log_test("Integration Flow YouTube", False, f"Exception: {str(e)}")
+        return False
+        
+    def test_integration_flow_wikipedia(self):
+        """Test complete integration flow for Wikipedia using HTTP proxy path"""
+        try:
+            integration_session = str(uuid.uuid4())
+            
+            # Step 1: AI Query Processing
+            ai_query = {
+                "query": "Open Wikipedia",
+                "session_id": integration_session
+            }
+            
+            response = self.session.post(f"{API_BASE}/ai/query", json=ai_query)
+            if response.status_code != 200:
+                self.log_test("Integration Flow Wikipedia - AI Query", False, f"AI query failed: {response.status_code}")
+                return False
+                
+            self.log_test("Integration Flow Wikipedia - AI Query", True, "AI processed Wikipedia request")
+            
+            # Step 2: Browser Command Execution
+            browser_command = {
+                "command": "open",
+                "url": "https://en.wikipedia.org",
+                "session_id": integration_session
+            }
+            
+            response = self.session.post(f"{API_BASE}/browser/execute", json=browser_command)
+            if response.status_code != 200:
+                self.log_test("Integration Flow Wikipedia - Browser Command", False, f"Browser command failed: {response.status_code}")
+                return False
+                
+            self.log_test("Integration Flow Wikipedia - Browser Command", True, "Browser command executed")
+            
+            # Step 3: Enhanced Proxy Content Loading (should use HTTP proxy for Wikipedia)
+            proxy_request = {
+                "url": "https://en.wikipedia.org"
+            }
+            
+            response = self.session.post(f"{API_BASE}/proxy/enhanced", json=proxy_request, timeout=60)
+            if response.status_code != 200:
+                self.log_test("Integration Flow Wikipedia - Enhanced Proxy", False, f"Enhanced proxy failed: {response.status_code}")
+                return False
+                
+            proxy_data = response.json()
+            if "content" not in proxy_data:
+                self.log_test("Integration Flow Wikipedia - Enhanced Proxy", False, "Proxy response missing content")
+                return False
+                
+            # Verify Wikipedia content was loaded
+            content = proxy_data.get("content", "")
+            if "wikipedia" not in content.lower():
+                self.log_test("Integration Flow Wikipedia - Content Verification", False, "Wikipedia content not detected")
+                return False
+                
+            self.log_test("Integration Flow Wikipedia - Complete", True, 
+                        f"Full integration successful, method: {proxy_data.get('method', 'unknown')}")
+            return True
+            
+        except Exception as e:
+            self.log_test("Integration Flow Wikipedia", False, f"Exception: {str(e)}")
+        return False
+        
+    def test_mongodb_connection(self):
+        """Test MongoDB connection and data storage"""
+        try:
+            # Test that AI interactions are being stored by making a query and checking sessions
+            test_query = {
+                "query": "Test MongoDB storage",
+                "session_id": self.session_id
+            }
+            
+            response = self.session.post(f"{API_BASE}/ai/query", json=test_query)
+            if response.status_code != 200:
+                self.log_test("MongoDB - AI Storage", False, "Failed to store AI interaction")
+                return False
+                
+            # Test that browser commands are being stored
+            test_command = {
+                "command": "open",
+                "url": "https://example.com",
+                "session_id": self.session_id
+            }
+            
+            response = self.session.post(f"{API_BASE}/browser/execute", json=test_command)
+            if response.status_code != 200:
+                self.log_test("MongoDB - Command Storage", False, "Failed to store browser command")
+                return False
+                
+            # Verify sessions endpoint can retrieve stored data
+            response = self.session.get(f"{API_BASE}/sessions")
+            if response.status_code == 200:
+                data = response.json()
+                if "sessions" in data and len(data["sessions"]) > 0:
+                    self.log_test("MongoDB - Data Retrieval", True, f"Retrieved {len(data['sessions'])} sessions from MongoDB")
+                    return True
+                else:
+                    self.log_test("MongoDB - Data Retrieval", False, "No sessions found in MongoDB")
+            else:
+                self.log_test("MongoDB - Data Retrieval", False, f"Sessions endpoint failed: {response.status_code}")
+                
+        except Exception as e:
+            self.log_test("MongoDB Connection", False, f"Exception: {str(e)}")
+        return False
+        
+    def test_session_management(self):
+        """Test session management across all components"""
+        try:
+            test_session = str(uuid.uuid4())
+            
+            # Test session consistency across AI query
+            ai_response = self.session.post(f"{API_BASE}/ai/query", json={
+                "query": "Test session management",
+                "session_id": test_session
+            })
+            
+            if ai_response.status_code != 200:
+                self.log_test("Session Management - AI", False, "AI query with session failed")
+                return False
+                
+            # Test session consistency across browser command
+            browser_response = self.session.post(f"{API_BASE}/browser/execute", json={
+                "command": "open",
+                "url": "https://example.com",
+                "session_id": test_session
+            })
+            
+            if browser_response.status_code != 200:
+                self.log_test("Session Management - Browser", False, "Browser command with session failed")
+                return False
+                
+            browser_data = browser_response.json()
+            if browser_data.get("session_id") != test_session:
+                self.log_test("Session Management - Consistency", False, "Session ID not consistent")
+                return False
+                
+            self.log_test("Session Management", True, f"Session {test_session} managed consistently across components")
+            return True
+            
+        except Exception as e:
+            self.log_test("Session Management", False, f"Exception: {str(e)}")
+        return False
+        
     def test_error_handling(self):
         """Test error handling scenarios"""
         try:
-            # Test AI query without Groq key (if applicable)
-            # Test browser command with missing parameters
-            
             # Missing URL for open command
             response = self.session.post(f"{API_BASE}/browser/execute", json={
                 "command": "open",
@@ -389,6 +598,7 @@ class KairoBackendTester:
                 self.log_test("Error Handling - Missing URL", True, "400 returned for missing URL")
             else:
                 self.log_test("Error Handling - Missing URL", False, f"Expected 400, got {response.status_code}")
+                return False
                 
             # Missing selector for click command
             response = self.session.post(f"{API_BASE}/browser/execute", json={
@@ -399,8 +609,16 @@ class KairoBackendTester:
                 self.log_test("Error Handling - Missing Selector", True, "400 returned for missing selector")
             else:
                 self.log_test("Error Handling - Missing Selector", False, f"Expected 400, got {response.status_code}")
+                return False
                 
-            return True
+            # Test proxy error handling
+            response = self.session.post(f"{API_BASE}/proxy/enhanced", json={})
+            if response.status_code == 400:
+                self.log_test("Error Handling - Proxy No URL", True, "400 returned for proxy without URL")
+                return True
+            else:
+                self.log_test("Error Handling - Proxy No URL", False, f"Expected 400, got {response.status_code}")
+                
         except Exception as e:
             self.log_test("Error Handling", False, f"Exception: {str(e)}")
         return False
