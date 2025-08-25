@@ -75,6 +75,176 @@ class UltraProxyService:
         """Check if site requires browser engine"""
         return any(site in url.lower() for site in settings.HEAVY_JS_SITES)
     
+    async def ultra_stealth_browser_proxy(self, url: str, custom_headers: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
+        """Ultra-stealth browser proxy with maximum anti-detection"""
+        try:
+            logger.info(f"🥷 Launching ultra-stealth browser for: {url}")
+            
+            async with async_playwright() as p:
+                # Random user agent selection
+                user_agent = random.choice(self.user_agents)
+                
+                # Ultra-stealth browser launch with randomization
+                browser = await p.chromium.launch(
+                    headless=True,
+                    args=self._get_ultra_stealth_args(),
+                    executable_path=None
+                )
+                
+                # Randomized viewport sizes (common resolutions)
+                viewports = [
+                    {'width': 1920, 'height': 1080},
+                    {'width': 1366, 'height': 768},
+                    {'width': 1536, 'height': 864},
+                    {'width': 1440, 'height': 900},
+                    {'width': 1280, 'height': 720}
+                ]
+                
+                viewport = random.choice(viewports)
+                
+                # Ultra-enhanced context with randomization
+                context = await browser.new_context(
+                    viewport=viewport,
+                    user_agent=user_agent,
+                    locale=random.choice(['en-US', 'en-GB', 'en-CA']),
+                    timezone_id=random.choice(['America/New_York', 'Europe/London', 'America/Los_Angeles']),
+                    permissions=['geolocation', 'notifications'],
+                    geolocation={'latitude': 40.7128 + random.uniform(-0.1, 0.1), 'longitude': -74.0060 + random.uniform(-0.1, 0.1)},
+                    extra_http_headers=self._get_ultra_stealth_headers(custom_headers, user_agent)
+                )
+                
+                # Ultra-comprehensive anti-detection script injection
+                await context.add_init_script(self._get_ultra_anti_detection_script())
+                
+                page = await context.new_page()
+                
+                # Set additional page properties for stealth
+                await page.evaluate(self._get_page_stealth_script())
+                
+                # Random delay before navigation (human-like behavior)
+                await asyncio.sleep(random.uniform(1.0, 3.0))
+                
+                # Navigate with enhanced options and retry mechanism
+                max_retries = 3
+                for attempt in range(max_retries):
+                    try:
+                        logger.info(f"🔄 Navigation attempt {attempt + 1} for {url}")
+                        
+                        await page.goto(
+                            url, 
+                            wait_until='networkidle', 
+                            timeout=settings.BROWSER_TIMEOUT * 2  # Longer timeout for stealth
+                        )
+                        
+                        # Wait for dynamic content with random delay
+                        await asyncio.sleep(random.uniform(3.0, 7.0))
+                        
+                        # Try to wait for main content areas
+                        content_selectors = ['body', 'main', '#content', '.content', '#main', '.main']
+                        for selector in content_selectors:
+                            try:
+                                await page.wait_for_selector(selector, timeout=5000)
+                                break
+                            except:
+                                continue
+                                
+                        break  # Success, exit retry loop
+                        
+                    except Exception as nav_error:
+                        logger.warning(f"Navigation attempt {attempt + 1} failed: {nav_error}")
+                        if attempt == max_retries - 1:
+                            raise nav_error
+                        await asyncio.sleep(random.uniform(2.0, 5.0))
+                
+                # Execute additional stealth measures
+                await self._execute_stealth_measures(page)
+                
+                # Get rendered content
+                content = await page.content()
+                
+                # Ultra-enhanced HTML processing
+                enhanced_content = await self._process_ultra_browser_content(content, url)
+                
+                await browser.close()
+                
+                return {
+                    "content": enhanced_content,
+                    "status_code": 200,
+                    "headers": {"Content-Type": "text/html; charset=utf-8"},
+                    "url": url,
+                    "method": "ultra_stealth_browser",
+                    "iframe_safe": True,
+                    "anti_detection": True,
+                    "javascript_rendered": True,
+                    "stealth_level": "maximum",
+                    "user_agent": user_agent
+                }
+                
+        except Exception as e:
+            logger.error(f"❌ Ultra-stealth browser proxy failed: {e}")
+            raise
+            
+    async def rotating_http_proxy(self, url: str, custom_headers: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
+        """HTTP proxy with user agent rotation and timing randomization"""
+        try:
+            # Random user agent and headers
+            user_agent = random.choice(self.user_agents)
+            headers = self._get_rotating_headers(user_agent)
+            
+            if custom_headers:
+                headers.update(custom_headers)
+            
+            # Random delay to mimic human behavior
+            await asyncio.sleep(random.uniform(0.5, 2.0))
+            
+            # Enhanced HTTP client with randomization
+            timeout = httpx.Timeout(
+                connect=random.uniform(5.0, 15.0),
+                read=random.uniform(15.0, 45.0),
+                write=5.0,
+                pool=5.0
+            )
+            
+            async with httpx.AsyncClient(
+                timeout=timeout,
+                follow_redirects=True,
+                limits=httpx.Limits(max_keepalive_connections=random.randint(3, 8), max_connections=settings.MAX_CONNECTIONS),
+                headers=headers
+            ) as client:
+                
+                # Make request with retry mechanism
+                max_retries = 2
+                for attempt in range(max_retries):
+                    try:
+                        response = await client.get(url, headers=headers)
+                        break
+                    except Exception as req_error:
+                        if attempt == max_retries - 1:
+                            raise req_error
+                        await asyncio.sleep(random.uniform(1.0, 3.0))
+                
+                # Process and enhance HTML with ultra-processing
+                enhanced_content = await self._process_ultra_html_content(response.text, url, user_agent)
+                
+                # Ultra-clean response headers
+                clean_headers = self._ultra_clean_response_headers(response.headers)
+                
+                return {
+                    "content": enhanced_content,
+                    "status_code": response.status_code,
+                    "headers": clean_headers,
+                    "url": str(response.url),
+                    "method": "rotating_http_proxy",
+                    "iframe_safe": True,
+                    "anti_detection": True,
+                    "user_agent": user_agent,
+                    "rotation": True
+                }
+                
+        except Exception as e:
+            logger.error(f"❌ Rotating HTTP proxy failed: {e}")
+            raise
+    
     async def enhanced_http_proxy(self, url: str, custom_headers: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
         """Enhanced HTTP proxy with anti-detection measures"""
         try:
