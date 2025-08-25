@@ -341,49 +341,192 @@ class UltraProxyService:
             logger.error(f"❌ Browser proxy failed: {e}")
             raise
     
-    async def _process_html_content(self, html: str, base_url: str) -> str:
-        """Process and enhance HTML content for iframe compatibility"""
+    async def _process_ultra_html_content(self, html: str, base_url: str, user_agent: str) -> str:
+        """Ultra-enhanced HTML processing for maximum compatibility"""
         try:
             soup = BeautifulSoup(html, 'html.parser')
             
-            # Remove problematic meta tags
-            self._remove_blocking_meta_tags(soup)
+            # Ultra-comprehensive blocking element removal
+            self._ultra_remove_blocking_elements(soup)
             
-            # Remove frame-busting scripts
-            self._remove_frame_busting_scripts(soup)
+            # Enhanced frame-busting script removal
+            self._ultra_remove_frame_busting_scripts(soup)
             
-            # Add base tag and enhanced headers
-            self._add_base_and_headers(soup, base_url)
+            # Advanced base tag and header injection
+            self._ultra_add_base_and_headers(soup, base_url)
             
-            # Rewrite links and forms
-            self._rewrite_links_and_forms(soup, base_url)
+            # Enhanced link and form rewriting
+            self._ultra_rewrite_links_and_forms(soup, base_url)
             
-            # Add enhanced compatibility styles and scripts
-            self._add_compatibility_enhancements(soup, "http_proxy")
+            # Ultra-compatibility enhancements
+            self._add_ultra_compatibility_enhancements(soup, "ultra_http_proxy", user_agent)
             
             return str(soup)
             
         except Exception as e:
-            logger.error(f"HTML processing failed: {e}")
+            logger.error(f"Ultra HTML processing failed: {e}")
             return html
     
-    async def _process_browser_content(self, html: str, base_url: str) -> str:
-        """Process browser-rendered content"""
+    async def _process_ultra_browser_content(self, html: str, base_url: str) -> str:
+        """Ultra-process browser-rendered content"""
         try:
             soup = BeautifulSoup(html, 'html.parser')
             
-            # Enhanced processing for browser-rendered content
-            self._remove_blocking_meta_tags(soup)
-            self._remove_frame_busting_scripts(soup)
-            self._add_base_and_headers(soup, base_url)
-            self._rewrite_links_and_forms(soup, base_url)
-            self._add_compatibility_enhancements(soup, "browser_rendered")
+            # Ultra-enhanced processing for browser-rendered content
+            self._ultra_remove_blocking_elements(soup)
+            self._ultra_remove_frame_busting_scripts(soup)
+            self._ultra_add_base_and_headers(soup, base_url)
+            self._ultra_rewrite_links_and_forms(soup, base_url)
+            self._add_ultra_compatibility_enhancements(soup, "ultra_stealth_browser", "")
             
             return str(soup)
             
         except Exception as e:
-            logger.error(f"Browser content processing failed: {e}")
+            logger.error(f"Ultra browser content processing failed: {e}")
             return html
+    
+    def _ultra_remove_blocking_elements(self, soup):
+        """Ultra-comprehensive removal of blocking elements"""
+        # Remove all known blocking meta tags
+        for meta in soup.find_all('meta'):
+            http_equiv = meta.get('http-equiv', '').lower()
+            content = meta.get('content', '').lower()
+            name = meta.get('name', '').lower()
+            
+            blocking_patterns = [
+                'x-frame-options', 'content-security-policy', 'x-content-type-options',
+                'frame-options', 'sameorigin', 'deny', 'frame-ancestors',
+                'referrer-policy', 'permissions-policy'
+            ]
+            
+            if any(pattern in http_equiv or pattern in content or pattern in name for pattern in blocking_patterns):
+                meta.decompose()
+        
+        # Remove noscript tags that might contain blocking code
+        for noscript in soup.find_all('noscript'):
+            noscript.decompose()
+        
+        # Remove potentially problematic style blocks
+        for style in soup.find_all('style'):
+            style_content = style.string or ''
+            if any(pattern in style_content for pattern in ['frame-busting', 'top.location', 'parent.location']):
+                style.decompose()
+    
+    def _ultra_remove_frame_busting_scripts(self, soup):
+        """Ultra-comprehensive frame-busting script removal"""
+        ultra_blocking_patterns = [
+            'top.location', 'frameElement', 'self !== top', 'parent.frames',
+            'window.top', 'top != self', 'parent != window', 'top != window',
+            'self != top', 'frameElement != null', 'window.frameElement',
+            'parent.document', 'top.document', 'window.parent',
+            'top === window', 'window === top', 'parent === window',
+            'document.domain', 'location.ancestorOrigins',
+            'window.opener', 'self.location', 'parent.location',
+            'top.frames', 'parent.postMessage', 'postMessage(',
+            'document.referrer', 'window.name', 'opener',
+            'frame-busting', 'framebusting', 'clickjacking',
+            'X-Frame-Options', 'frame-ancestors', 'sandbox'
+        ]
+        
+        for script in soup.find_all('script'):
+            if script.string:
+                script_content = script.string.lower()
+                if any(pattern.lower() in script_content for pattern in ultra_blocking_patterns):
+                    # Replace with harmless comment
+                    script.string = '/* Ultra frame compatibility - original script neutralized by Kairo Browser */'
+            elif script.get('src'):
+                # Check for external scripts that might contain frame busting
+                src = script.get('src', '').lower()
+                suspicious_sources = ['framebreaker', 'clickjack', 'security', 'protection']
+                if any(sus in src for sus in suspicious_sources):
+                    script.decompose()
+    
+    def _ultra_add_base_and_headers(self, soup, base_url: str):
+        """Ultra-enhanced base tag and header injection"""
+        if not soup.head:
+            soup.insert(0, soup.new_tag("head"))
+        
+        # Ultra-permissive base tag
+        base_tag = soup.new_tag("base", href=base_url, target="_self")
+        soup.head.insert(0, base_tag)
+        
+        # Ultra-permissive CSP that allows everything
+        ultra_csp = soup.new_tag("meta")
+        ultra_csp.attrs['http-equiv'] = 'Content-Security-Policy'
+        ultra_csp.attrs['content'] = "default-src * 'unsafe-inline' 'unsafe-eval' data: blob: filesystem: about: ws: wss: 'unsafe-hashes'; script-src * 'unsafe-inline' 'unsafe-eval'; connect-src * 'unsafe-inline'; img-src * data: blob: 'unsafe-inline'; frame-src *; style-src * 'unsafe-inline'; font-src * data:; frame-ancestors *; form-action *;"
+        soup.head.append(ultra_csp)
+        
+        # Multiple X-Frame-Options overrides
+        for value in ['ALLOWALL', 'SAMEORIGIN', 'DENY']:  # Try all values
+            frame_options = soup.new_tag("meta")
+            frame_options.attrs['http-equiv'] = 'X-Frame-Options'
+            frame_options.attrs['content'] = 'ALLOWALL'  # Always use ALLOWALL
+            soup.head.append(frame_options)
+        
+        # Additional compatibility headers
+        compatibility_headers = [
+            ('Referrer-Policy', 'no-referrer-when-downgrade'),
+            ('Permissions-Policy', 'geolocation=*, microphone=*, camera=*'),
+            ('Cross-Origin-Embedder-Policy', 'unsafe-none'),
+            ('Cross-Origin-Opener-Policy', 'same-origin-allow-popups'),
+            ('Cross-Origin-Resource-Policy', 'cross-origin')
+        ]
+        
+        for header, value in compatibility_headers:
+            meta_tag = soup.new_tag("meta")
+            meta_tag.attrs['http-equiv'] = header
+            meta_tag.attrs['content'] = value
+            soup.head.append(meta_tag)
+    
+    def _ultra_rewrite_links_and_forms(self, soup, base_url: str):
+        """Ultra-enhanced link and form rewriting"""
+        # Enhanced link rewriting
+        for link in soup.find_all(['a', 'link']):
+            href = link.get('href')
+            if href and not href.startswith('#') and not href.startswith('javascript:') and not href.startswith('mailto:'):
+                try:
+                    full_url = self._resolve_url(href, base_url)
+                    link['data-kairo-original-href'] = href
+                    link['data-kairo-proxy-url'] = full_url
+                    link['href'] = '#kairo-intercepted'
+                    # Add click handler class
+                    existing_classes = link.get('class', [])
+                    if isinstance(existing_classes, str):
+                        existing_classes = existing_classes.split()
+                    existing_classes.append('kairo-intercepted-link')
+                    link['class'] = ' '.join(existing_classes)
+                except:
+                    pass
+        
+        # Enhanced form rewriting
+        for form in soup.find_all('form'):
+            action = form.get('action')
+            if action and not action.startswith('#') and not action.startswith('javascript:'):
+                try:
+                    full_url = self._resolve_url(action, base_url)
+                    form['data-kairo-original-action'] = action
+                    form['data-kairo-proxy-action'] = full_url
+                    form['action'] = '#kairo-form-intercepted'
+                    # Add form handler class
+                    existing_classes = form.get('class', [])
+                    if isinstance(existing_classes, str):
+                        existing_classes = existing_classes.split()
+                    existing_classes.append('kairo-intercepted-form')
+                    form['class'] = ' '.join(existing_classes)
+                except:
+                    pass
+        
+        # Rewrite iframe sources for recursive proxying
+        for iframe in soup.find_all('iframe'):
+            src = iframe.get('src')
+            if src and not src.startswith('data:') and not src.startswith('javascript:'):
+                try:
+                    full_url = self._resolve_url(src, base_url)
+                    iframe['data-kairo-original-src'] = src
+                    iframe['data-kairo-proxy-src'] = full_url
+                    # Keep original src but mark for potential re-proxying
+                except:
+                    pass
     
     def _get_browser_headers(self) -> Dict[str, str]:
         """Get enhanced browser headers"""
