@@ -48,13 +48,13 @@ const WelcomePage = ({ onStartBrowsing }) => {
       icon: MousePointer2,
       iconBg: 'bg-purple-100',
       iconColor: 'text-purple-600', 
-      title: 'Full Interactivity',
-      description: 'Click, scroll, type, and navigate like a real browser',
+      title: 'Advanced Interactivity',
+      description: 'Enhanced browsing with modern UI, gestures, and controls',
       details: [
-        'Mouse and keyboard input',
-        'Form interactions',
-        'Scroll and navigation',
-        'Multi-tab support'
+        'Touch and gesture support',
+        'Keyboard shortcuts',
+        'Voice commands (coming soon)',
+        'Smart form completion'
       ]
     }
   ];
