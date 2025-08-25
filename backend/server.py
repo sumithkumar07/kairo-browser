@@ -635,85 +635,264 @@ async def proxy_with_browser(request_data: Dict[str, Any]):
 
 @app.post("/api/proxy/enhanced")
 async def enhanced_proxy_request(request_data: Dict[str, Any]):
-    """Enhanced proxy with better header handling and iframe support"""
+    """Smart proxy routing with enhanced capabilities for different site types"""
     try:
         url = request_data.get("url")
         if not url:
             raise HTTPException(status_code=400, detail="URL required")
         
-        # For YouTube, try a different approach - return iframe HTML directly
-        if 'youtube.com' in url:
-            iframe_html = f"""
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="utf-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1">
-                <title>YouTube - Kairo Browser</title>
-                <style>
-                    body {{ 
-                        margin: 0; 
-                        padding: 0; 
-                        overflow: hidden;
-                        background: #000;
-                    }}
-                    iframe {{ 
-                        width: 100vw; 
-                        height: 100vh; 
-                        border: none; 
-                    }}
-                    .youtube-container {{
-                        position: relative;
-                        width: 100%;
-                        height: 100vh;
-                        background: #0f0f0f;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        color: white;
-                        font-family: Arial, sans-serif;
-                    }}
-                    .youtube-message {{
-                        text-align: center;
-                        padding: 20px;
-                    }}
-                </style>
-            </head>
-            <body>
-                <div class="youtube-container">
-                    <div class="youtube-message">
-                        <h2>🎥 YouTube Integration</h2>
-                        <p>AI successfully opened YouTube!</p>
-                        <p>URL: {url}</p>
-                        <p style="font-size: 14px; opacity: 0.7;">
-                            Note: YouTube prevents embedding in iframes for security.<br>
-                            Try asking AI to open other sites like "Open Google" or "Open Wikipedia"
-                        </p>
-                        <button onclick="window.open('{url}', '_blank')" 
-                                style="background: #ff0000; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 10px;">
-                            Open YouTube in New Tab
-                        </button>
-                    </div>
-                </div>
-            </body>
-            </html>
-            """
-            
-            return {
-                "content": iframe_html,
-                "status_code": 200,
-                "headers": {"Content-Type": "text/html"},
-                "url": url,
-                "iframe_safe": True,
-                "method": "youtube_fallback"
-            }
+        # Smart routing based on site characteristics
+        heavy_js_sites = [
+            'youtube.com', 'gmail.com', 'docs.google.com', 'sheets.google.com',
+            'facebook.com', 'instagram.com', 'twitter.com', 'x.com',
+            'linkedin.com', 'reddit.com', 'discord.com', 'slack.com',
+            'notion.so', 'figma.com', 'canva.com', 'whatsapp.com'
+        ]
         
-        # For other sites, use the enhanced proxy
-        return await proxy_request(request_data)
+        # Check if site requires browser engine
+        requires_browser_engine = any(site in url.lower() for site in heavy_js_sites)
+        
+        if requires_browser_engine:
+            logger.info(f"Using browser engine for JavaScript-heavy site: {url}")
+            # Use enhanced browser proxy for complex sites
+            return await proxy_with_browser(request_data)
+        else:
+            logger.info(f"Using enhanced HTTP proxy for regular site: {url}")
+            # Use enhanced HTTP proxy for regular sites
+            try:
+                return await enhanced_http_proxy(request_data)
+            except Exception as http_error:
+                logger.warning(f"HTTP proxy failed for {url}, falling back to browser engine: {str(http_error)}")
+                return await proxy_with_browser(request_data)
             
     except Exception as e:
-        logger.error(f"Error with enhanced proxy: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Enhanced proxy error: {str(e)}")
+        logger.error(f"Error with enhanced proxy routing: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Enhanced proxy routing error: {str(e)}")
+
+async def enhanced_http_proxy(request_data: Dict[str, Any]):
+    """Enhanced HTTP proxy with advanced anti-detection and header manipulation"""
+    try:
+        url = request_data.get("url")
+        if not url:
+            raise HTTPException(status_code=400, detail="URL required")
+        
+        # Enhanced headers to mimic real browser behavior
+        enhanced_headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1',
+            'Upgrade-Insecure-Requests': '1',
+            'Connection': 'keep-alive',
+            'DNT': '1',
+            'Sec-CH-UA': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+            'Sec-CH-UA-Mobile': '?0',
+            'Sec-CH-UA-Platform': '"Windows"'
+        }
+        
+        async with httpx.AsyncClient(
+            timeout=30.0,
+            follow_redirects=True,
+            limits=httpx.Limits(max_keepalive_connections=5, max_connections=10)
+        ) as client:
+            response = await client.get(url, headers=enhanced_headers)
+            
+            # Parse and enhance HTML
+            soup = BeautifulSoup(response.text, 'html.parser')
+            
+            # Enhanced meta tag manipulation
+            problematic_metas = []
+            for meta in soup.find_all('meta'):
+                http_equiv = meta.get('http-equiv', '').lower()
+                name = meta.get('name', '').lower()
+                content = meta.get('content', '').lower()
+                
+                if http_equiv in ['x-frame-options', 'content-security-policy']:
+                    problematic_metas.append(meta)
+                elif 'frame-options' in content or 'sameorigin' in content or 'deny' in content:
+                    problematic_metas.append(meta)
+                elif name == 'referrer' and 'no-referrer' in content:
+                    meta['content'] = 'unsafe-url'
+            
+            # Remove problematic meta tags
+            for meta in problematic_metas:
+                meta.decompose()
+            
+            # Enhanced script filtering
+            scripts_to_modify = []
+            for script in soup.find_all('script'):
+                script_content = script.string or ''
+                
+                # Keywords that indicate frame-busting or detection scripts
+                blocking_patterns = [
+                    'top.location', 'frameElement', 'self !== top', 'parent.frames',
+                    'window.top', 'top != self', 'parent != window', 'top != window',
+                    'self != top', 'frameElement != null', 'window.frameElement',
+                    'parent.document', 'top.document', 'window.parent',
+                    'document.referrer', 'location.ancestor', 'ancestor.location'
+                ]
+                
+                if any(pattern in script_content for pattern in blocking_patterns):
+                    # Replace with harmless comment
+                    script.string = '/* Frame compatibility - script modified by Kairo Browser */'
+            
+            # Add comprehensive base tag
+            if soup.head:
+                base_tag = soup.new_tag("base", href=url)
+                soup.head.insert(0, base_tag)
+                
+                # Add permissive CSP
+                new_csp = soup.new_tag("meta")
+                new_csp.attrs['http-equiv'] = 'Content-Security-Policy'
+                new_csp.attrs['content'] = "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; frame-ancestors *; frame-src *;"
+                soup.head.append(new_csp)
+                
+                # Add X-Frame-Options override
+                frame_options = soup.new_tag("meta")
+                frame_options.attrs['http-equiv'] = 'X-Frame-Options'
+                frame_options.attrs['content'] = 'ALLOWALL'
+                soup.head.append(frame_options)
+            
+            # Enhanced CSS for iframe compatibility
+            enhanced_style = soup.new_tag("style")
+            enhanced_style.string = """
+                /* Kairo Browser Enhanced Compatibility Styles */
+                body { 
+                    margin: 0 !important; 
+                    padding: 0 !important; 
+                    overflow-x: auto !important;
+                    min-height: 100vh !important;
+                    width: 100% !important;
+                }
+                
+                * { 
+                    box-sizing: border-box !important; 
+                }
+                
+                /* Fix common iframe breaking elements */
+                iframe, embed, object { 
+                    max-width: 100% !important; 
+                }
+                
+                /* Prevent fixed positioning from breaking layout */
+                .fixed-header, .fixed-nav, .sticky-header, 
+                [style*="position: fixed"], [class*="fixed"], [id*="fixed"] {
+                    position: relative !important;
+                    top: auto !important;
+                    left: auto !important;
+                    right: auto !important;
+                    bottom: auto !important;
+                    z-index: auto !important;
+                }
+                
+                /* Ensure important content remains visible */
+                [style*="display: none"], [style*="visibility: hidden"] {
+                    display: block !important;
+                    visibility: visible !important;
+                }
+                
+                /* Override common breakout attempts */
+                .breakout, .fullscreen, [class*="overlay"], [id*="overlay"] {
+                    position: relative !important;
+                    width: 100% !important;
+                    height: auto !important;
+                }
+            """
+            if soup.head:
+                soup.head.append(enhanced_style)
+            
+            # Add enhanced JavaScript compatibility layer
+            compat_script = soup.new_tag("script")
+            compat_script.string = """
+                (function() {
+                    'use strict';
+                    
+                    // Enhanced frame compatibility
+                    try {
+                        // Override frame detection properties
+                        Object.defineProperty(window, 'top', {
+                            get: function() { return window.self; },
+                            set: function() {},
+                            configurable: false
+                        });
+                        
+                        Object.defineProperty(window, 'parent', {
+                            get: function() { return window.self; },
+                            set: function() {},
+                            configurable: false
+                        });
+                        
+                        Object.defineProperty(window, 'frameElement', {
+                            get: function() { return null; },
+                            set: function() {},
+                            configurable: false
+                        });
+                        
+                        // Prevent common redirect methods
+                        const originalOpen = window.open;
+                        window.open = function(url, target, features) {
+                            console.log('Kairo Browser: Intercepted window.open to', url);
+                            return originalOpen.call(window, url, target || '_blank', features);
+                        };
+                        
+                        // Override location methods that could break iframe
+                        const originalReplace = window.location.replace;
+                        window.location.replace = function(url) {
+                            console.log('Kairo Browser: Blocked location.replace to', url);
+                        };
+                        
+                        const originalAssign = window.location.assign;
+                        window.location.assign = function(url) {
+                            console.log('Kairo Browser: Blocked location.assign to', url);
+                        };
+                        
+                        // Prevent document.domain manipulation
+                        try {
+                            Object.defineProperty(document, 'domain', {
+                                get: function() { return location.hostname; },
+                                set: function() { console.log('Kairo Browser: Blocked document.domain change'); },
+                                configurable: false
+                            });
+                        } catch (e) {}
+                        
+                    } catch (e) {
+                        console.log('Kairo Browser compatibility script error:', e);
+                    }
+                })();
+            """
+            if soup.body:
+                soup.body.append(compat_script)
+            
+            # Clean response headers
+            clean_headers = {}
+            for key, value in response.headers.items():
+                lower_key = key.lower()
+                if lower_key not in ['x-frame-options', 'content-security-policy', 'x-content-type-options']:
+                    clean_headers[key] = value
+            
+            # Add iframe-friendly headers
+            clean_headers['X-Frame-Options'] = 'ALLOWALL'
+            clean_headers['Content-Security-Policy'] = "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; frame-ancestors *;"
+            
+            return {
+                "content": str(soup),
+                "status_code": response.status_code,
+                "headers": clean_headers,
+                "url": str(response.url),
+                "iframe_safe": True,
+                "method": "enhanced_http_proxy",
+                "anti_detection": True
+            }
+            
+    except Exception as e:
+        logger.error(f"Error with enhanced HTTP proxy: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Enhanced HTTP proxy error: {str(e)}")
 
 @app.post("/api/proxy")
 async def proxy_request(request_data: Dict[str, Any]):
