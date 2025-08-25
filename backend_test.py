@@ -69,18 +69,31 @@ class UltimateKairoAPITester:
         success, response = self.make_request('GET', '/system/status')
         self.log_test("Enhanced System Status", success, str(response.get('error', '')) if not success else "")
         
-    def test_ai_query_endpoint(self):
-        """Test AI query processing"""
-        print("\n🤖 Testing AI Query Endpoint...")
+    def test_ai_endpoints(self):
+        """Test AI processing endpoints"""
+        print("\n🤖 Testing AI Processing Endpoints...")
         
+        # Basic AI query
         test_query = {
-            "query": "What is artificial intelligence?",
+            "query": "Open YouTube",
             "context": {"page_url": "https://example.com"},
-            "session_id": "test_session_123"
+            "session_id": self.session_id
         }
         
         success, response = self.make_request('POST', '/ai/query', test_query)
-        self.log_test("AI Query Processing", success, str(response.get('error', '')) if not success else "")
+        self.log_test("Basic AI Query Processing", success, str(response.get('error', '')) if not success else "")
+        
+        # Enhanced multimodal AI query
+        multimodal_query = {
+            "query": "Analyze this website content",
+            "context": {"current_page": "https://example.com"},
+            "session_id": self.session_id,
+            "include_predictions": True,
+            "include_visual_feedback": True
+        }
+        
+        success, response = self.make_request('POST', '/ai/multimodal-query', multimodal_query)
+        self.log_test("Enhanced Multimodal AI Query", success, str(response.get('error', '')) if not success else "")
 
     def test_enhanced_search_endpoints(self):
         """Test enhanced search capabilities"""
