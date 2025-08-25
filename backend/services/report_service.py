@@ -610,6 +610,35 @@ class ReportService:
             logger.info(f"💾 Report {report.get('report_id')} stored successfully")
         except Exception as e:
             logger.error(f"❌ Report storage failed: {e}")
+    
+    def _create_simple_chart(self, data: Dict[str, Any]) -> str:
+        """Create a simple chart visualization"""
+        try:
+            plt.figure(figsize=(10, 6))
+            plt.plot([1, 2, 3, 4, 5], [1, 4, 2, 3, 5])
+            plt.title("Sample Chart")
+            plt.xlabel("X-axis")
+            plt.ylabel("Y-axis")
+            
+            # Save to base64
+            buffer = BytesIO()
+            plt.savefig(buffer, format='png')
+            buffer.seek(0)
+            image_base64 = base64.b64encode(buffer.getvalue()).decode()
+            plt.close()
+            
+            return f"data:image/png;base64,{image_base64}"
+        except Exception as e:
+            logger.error(f"❌ Chart creation failed: {e}")
+            return ""
+    
+    def _create_simple_table(self, data: Dict[str, Any]) -> str:
+        """Create a simple table"""
+        try:
+            return "<table><tr><th>Metric</th><th>Value</th></tr><tr><td>Sample</td><td>Data</td></tr></table>"
+        except Exception as e:
+            logger.error(f"❌ Table creation failed: {e}")
+            return ""
 
 # Global report service instance
 report_service = ReportService()
