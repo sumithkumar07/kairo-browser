@@ -532,7 +532,9 @@ async def proxy_with_browser(request_data: Dict[str, Any]):
                 soup.head.append(csp_meta)
                 
                 # Ensure viewport
-                viewport_meta = soup.new_tag("meta", name="viewport", content="width=device-width, initial-scale=1.0")
+                viewport_meta = soup.new_tag("meta")
+                viewport_meta.attrs['name'] = 'viewport'
+                viewport_meta.attrs['content'] = 'width=device-width, initial-scale=1.0'
                 soup.head.append(viewport_meta)
             
             # Enhanced CSS injection
