@@ -104,16 +104,23 @@ const BrowserInterface = ({ onBackToWelcome }) => {
             responseText += `\n\nOpening ${command.params.url}...`;
             await navigateToUrl(command.params.url);
             
-            // Load content via proxy
+            // Load content via enhanced proxy system
             try {
               const response = await proxyRequest(command.params.url);
               if (response.content) {
+                console.log(`Content loaded using ${response.method} for ${command.params.url}`);
                 setIframeContent(response.content);
+                
+                // Update response text with method info
+                if (response.method === 'enhanced_browser_rendered') {
+                  responseText += `\n✅ Loaded using enhanced browser engine with anti-detection`;
+                } else if (response.method === 'enhanced_http_proxy') {
+                  responseText += `\n✅ Loaded using enhanced HTTP proxy`;
+                }
               }
             } catch (proxyError) {
-              console.error('Proxy error:', proxyError);
-              // Fallback to direct iframe load
-              setIframeContent(`<iframe src="${command.params.url}" style="width:100%;height:100%;border:none;"></iframe>`);
+              console.error('All proxy methods failed:', proxyError);
+              responseText += `\n⚠️ Unable to load content directly. This may be due to site restrictions.`;
             }
           }
         }
