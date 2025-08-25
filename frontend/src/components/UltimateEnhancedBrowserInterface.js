@@ -162,6 +162,83 @@ const UltimateEnhancedBrowserInterface = ({ onBackToWelcome }) => {
     }
   };
 
+  // Enhanced browser automation functions
+  const executeBrowserAction = async (selector, action, value = null) => {
+    try {
+      const backendUrl = process.env.REACT_APP_BACKEND_URL || window.location.origin;
+      
+      const response = await fetch(`${backendUrl}/api/browser/execute`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          command: action,
+          selector: selector,
+          value: value,
+          url: currentUrl,
+          session_id: sessionId
+        })
+      });
+
+      const result = await response.json();
+      return result.success;
+    } catch (error) {
+      console.error('Browser automation error:', error);
+      return false;
+    }
+  };
+
+  const searchOnCurrentSite = async (searchQuery) => {
+    try {
+      // Try common search selectors
+      const searchSelectors = [
+        'input[name="search"]',
+        'input[name="q"]',
+        'input[placeholder*="search"]',
+        'input[placeholder*="Search"]',
+        '#search',
+        '.search-input',
+        '[role="searchbox"]'
+      ];
+
+      for (const selector of searchSelectors) {
+        const success = await executeBrowserAction(selector, 'type', searchQuery);
+        if (success) {
+          // Try to submit the search
+          await executeBrowserAction(selector, 'keypress', 'Enter');
+          return true;
+        }
+      }
+      return false;
+    } catch (error) {
+      console.error('Search automation error:', error);
+      return false;
+    }
+  };
+
+  const clickFirstResult = async () => {
+    try {
+      // YouTube specific selectors
+      const resultSelectors = [
+        'a#video-title',
+        '.ytd-video-renderer a',
+        '[data-testid="video-title"]',
+        '.video-title-link',
+        'h3 a'
+      ];
+
+      for (const selector of resultSelectors) {
+        const success = await executeBrowserAction(selector, 'click');
+        if (success) {
+          return true;
+        }
+      }
+      return false;
+    } catch (error) {
+      console.error('Click automation error:', error);
+      return false;
+    }
+  };
+
   const handleAIChat = async (e) => {
     e.preventDefault();
     if (!currentMessage.trim()) return;
@@ -198,12 +275,81 @@ const UltimateEnhancedBrowserInterface = ({ onBackToWelcome }) => {
       if (aiResponse.success && aiResponse.response) {
         let responseText = aiResponse.response.explanation || 'I understand your request.';
         
-        // Process commands if any
+        // Enhanced command processing
         if (aiResponse.response.commands && aiResponse.response.commands.length > 0) {
           for (const command of aiResponse.response.commands) {
-            if (command.type === 'open' && command.params?.url) {
-              responseText += `\n\n🚀 Opening ${command.params.url} with enhanced capabilities...`;
+            console.log('Processing AI command:', command);
+            
+            // Handle navigation commands
+            if ((command.type === 'open' || command.type === 'browser_action') && command.params?.url) {
+              responseText += `\n\n🚀 Navigating to ${command.params.url}...`;
               await navigateToUrl(command.params.url);
+              
+              // Wait for page load
+              await new Promise(resolve => setTimeout(resolve, 3000));
+              
+              // If it's a search action, extract search query and perform search
+              if (command.params.action === 'open_youtube' || command.params.url.includes('search')) {
+                const urlObj = new URL(command.params.url);
+                const searchQuery = urlObj.searchParams.get('q');
+                
+                if (searchQuery) {
+                  responseText += `\n🔍 Searching for: ${decodeURIComponent(searchQuery)}...`;
+                  
+                  // Wait a bit more for YouTube to load
+                  await new Promise(resolve => setTimeout(resolve, 2000));
+                  
+                  // The search results should already be loaded since we navigated to the search URL
+                  responseText += `\n🎯 Search results loaded. Looking for video...`;
+                  
+                  // Try to click the first video result
+                  await new Promise(resolve => setTimeout(resolve, 1000));
+                  const clickSuccess = await clickFirstResult();
+                  
+                  if (clickSuccess) {
+                    responseText += `\n▶️ Video should be loading...`;
+                  } else {
+                    responseText += `\n⚠️ Search results available - you can click on any video to play`;
+                  }
+                }
+              }
+            }
+            
+            // Handle search commands
+            else if (command.type === 'search' && command.params?.query) {
+              responseText += `\n\n🔍 Searching for: ${command.params.query}...`;
+              const searchSuccess = await searchOnCurrentSite(command.params.query);
+              
+              if (searchSuccess) {
+                responseText += `\n✅ Search executed successfully`;
+                await new Promise(resolve => setTimeout(resolve, 2000));
+              } else {
+                responseText += `\n⚠️ Could not find search box on current page`;
+              }
+            }
+            
+            // Handle click commands
+            else if (command.type === 'click' && command.params?.selector) {
+              responseText += `\n\n👆 Clicking element...`;
+              const clickSuccess = await executeBrowserAction(command.params.selector, 'click');
+              
+              if (clickSuccess) {
+                responseText += `\n✅ Click executed successfully`;
+              } else {
+                responseText += `\n⚠️ Could not find element to click`;
+              }
+            }
+            
+            // Handle type commands
+            else if (command.type === 'type' && command.params?.selector && command.params?.text) {
+              responseText += `\n\n⌨️ Typing text...`;
+              const typeSuccess = await executeBrowserAction(command.params.selector, 'type', command.params.text);
+              
+              if (typeSuccess) {
+                responseText += `\n✅ Text entered successfully`;
+              } else {
+                responseText += `\n⚠️ Could not find input field`;
+              }
             }
           }
         }
