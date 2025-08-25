@@ -3,12 +3,14 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import WelcomePage from './components/WelcomePage';
 import BrowserInterface from './components/BrowserInterface';
 import EnhancedBrowserInterface from './components/EnhancedBrowserInterface';
+import UltimateEnhancedBrowserInterface from './components/UltimateEnhancedBrowserInterface';
 import { SessionProvider } from './contexts/SessionContext';
 import './App.css';
 
 function App() {
   const [currentView, setCurrentView] = useState('welcome');
-  const [useEnhancedUI, setUseEnhancedUI] = useState(true); // New enhanced UI by default
+  const [useUltimateUI, setUseUltimateUI] = useState(true); // Ultimate enhanced UI by default
+  const [useEnhancedUI, setUseEnhancedUI] = useState(true); // Fallback to enhanced UI
 
   return (
     <SessionProvider>
