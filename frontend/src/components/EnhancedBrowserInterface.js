@@ -1069,7 +1069,7 @@ const EnhancedBrowserInterface = ({ onBackToWelcome }) => {
               </div>
               <h3 className="text-2xl font-bold text-gray-800 mb-3">Enhanced AI Browser Ready</h3>
               <p className="text-gray-600 mb-6 leading-relaxed">
-                Your AI assistant now has Fellou-level capabilities: Deep Search, Agent Creation, Smart Reports, TTS, Translation, and Visual Workflow Builder
+                Your AI assistant can now build complex workflows through conversation. Create automations, schedule tasks, and build custom routines - all through natural language.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <button 
