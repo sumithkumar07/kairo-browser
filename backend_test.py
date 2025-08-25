@@ -280,23 +280,98 @@ class KairoBackendTester:
             if response.status_code == 200:
                 data = response.json()
                 if "content" in data and "status_code" in data:
-                    self.log_test("Proxy", True, f"Proxied request successful, status: {data.get('status_code')}", 
+                    self.log_test("Proxy - Basic", True, f"Basic proxy successful, status: {data.get('status_code')}", 
                                 {"url": data.get("url"), "status_code": data.get("status_code")})
-                    return True
                 else:
-                    self.log_test("Proxy", False, f"Unexpected response format: {data}")
+                    self.log_test("Proxy - Basic", False, f"Unexpected response format: {data}")
+                    return False
             else:
-                self.log_test("Proxy", False, f"HTTP {response.status_code}: {response.text}")
+                self.log_test("Proxy - Basic", False, f"HTTP {response.status_code}: {response.text}")
+                return False
                 
             # Test proxy without URL
             response = self.session.post(f"{API_BASE}/proxy", json={})
             if response.status_code == 400:
                 self.log_test("Proxy - No URL", True, "400 returned when URL missing")
+                return True
             else:
                 self.log_test("Proxy - No URL", False, f"Expected 400, got {response.status_code}")
+                return False
                 
         except Exception as e:
-            self.log_test("Proxy", False, f"Exception: {str(e)}")
+            self.log_test("Proxy - Basic", False, f"Exception: {str(e)}")
+        return False
+        
+    def test_enhanced_proxy(self):
+        """Test /api/proxy/enhanced endpoint with smart routing"""
+        try:
+            # Test enhanced proxy with Wikipedia (should use HTTP proxy)
+            wikipedia_data = {
+                "url": "https://en.wikipedia.org/wiki/Artificial_intelligence"
+            }
+            
+            response = self.session.post(f"{API_BASE}/proxy/enhanced", json=wikipedia_data, timeout=60)
+            if response.status_code == 200:
+                data = response.json()
+                if "content" in data and "method" in data and "iframe_safe" in data:
+                    method_used = data.get("method", "unknown")
+                    self.log_test("Enhanced Proxy - Wikipedia", True, 
+                                f"Enhanced proxy successful, method: {method_used}", 
+                                {"url": data.get("url"), "method": method_used, "iframe_safe": data.get("iframe_safe")})
+                else:
+                    self.log_test("Enhanced Proxy - Wikipedia", False, f"Unexpected response format: {data}")
+                    return False
+            else:
+                self.log_test("Enhanced Proxy - Wikipedia", False, f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+            # Test enhanced proxy with YouTube (should use browser engine)
+            youtube_data = {
+                "url": "https://www.youtube.com"
+            }
+            
+            response = self.session.post(f"{API_BASE}/proxy/enhanced", json=youtube_data, timeout=90)
+            if response.status_code == 200:
+                data = response.json()
+                if "content" in data and "method" in data:
+                    method_used = data.get("method", "unknown")
+                    self.log_test("Enhanced Proxy - YouTube", True, 
+                                f"Enhanced proxy successful, method: {method_used}", 
+                                {"url": data.get("url"), "method": method_used})
+                    return True
+                else:
+                    self.log_test("Enhanced Proxy - YouTube", False, f"Unexpected response format: {data}")
+            else:
+                self.log_test("Enhanced Proxy - YouTube", False, f"HTTP {response.status_code}: {response.text}")
+                
+        except Exception as e:
+            self.log_test("Enhanced Proxy", False, f"Exception: {str(e)}")
+        return False
+        
+    def test_browser_proxy(self):
+        """Test /api/proxy/browser endpoint with Playwright"""
+        try:
+            # Test browser proxy with a JavaScript-heavy site
+            browser_data = {
+                "url": "https://www.google.com"
+            }
+            
+            response = self.session.post(f"{API_BASE}/proxy/browser", json=browser_data, timeout=90)
+            if response.status_code == 200:
+                data = response.json()
+                if "content" in data and "method" in data and "anti_detection" in data:
+                    self.log_test("Browser Proxy - Google", True, 
+                                f"Browser proxy successful with anti-detection", 
+                                {"url": data.get("url"), "method": data.get("method"), 
+                                 "anti_detection": data.get("anti_detection")})
+                    return True
+                else:
+                    self.log_test("Browser Proxy - Google", False, f"Unexpected response format: {data}")
+            else:
+                self.log_test("Browser Proxy - Google", False, f"HTTP {response.status_code}: {response.text}")
+                
+        except Exception as e:
+            self.log_test("Browser Proxy", False, f"Exception: {str(e)}")
         return False
         
     def test_error_handling(self):
