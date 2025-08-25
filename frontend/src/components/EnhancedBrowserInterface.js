@@ -796,7 +796,7 @@ const EnhancedBrowserInterface = ({ onBackToWelcome }) => {
     setCurrentMessage(command);
     addChatMessage('user', command);
     
-    // Process the command
+    // Process the command based on type
     if (command.includes('Deep search')) {
       await handleDeepSearch(command);
     } else if (command.includes('Create agent')) {
@@ -807,6 +807,8 @@ const EnhancedBrowserInterface = ({ onBackToWelcome }) => {
       await handleTranslation(command);
     } else if (command.includes('Read aloud')) {
       await handleTextToSpeech(command);
+    } else if (isWorkflowBuildingCommand(command)) {
+      await handleWorkflowBuilding(command);
     } else {
       // Standard processing for other commands
       try {
