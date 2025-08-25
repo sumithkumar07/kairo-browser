@@ -278,27 +278,46 @@ class UltimateKairoAPITester:
         success, response = self.make_request('GET', '/sessions')
         self.log_test("Get Active Sessions", success, str(response.get('error', '')) if not success else "")
 
-    def test_proxy_endpoints(self):
-        """Test proxy functionality"""
-        print("\n🔄 Testing Proxy Endpoints...")
+    def test_workflow_execution(self):
+        """Test workflow execution"""
+        print("\n⚙️ Testing Workflow Execution...")
         
-        # Enhanced proxy
-        proxy_request = {
-            "url": "https://httpbin.org/get",
-            "method": "GET"
+        # Basic workflow execution
+        workflow_request = {
+            "name": "Test Workflow",
+            "steps": [
+                {"command": "navigate", "url": "https://httpbin.org/get"},
+                {"command": "wait", "duration": 1000}
+            ],
+            "session_id": self.session_id,
+            "timeout_ms": 30000
         }
         
-        success, response = self.make_request('POST', '/proxy/enhanced', proxy_request)
-        self.log_test("Enhanced Proxy", success, str(response.get('error', '')) if not success else "")
+        success, response = self.make_request('POST', '/workflow/execute', workflow_request)
+        workflow_id = None
+        if success and 'workflow_id' in response:
+            workflow_id = response['workflow_id']
         
-        # Navigation with proxy
-        nav_request = {
-            "url": "https://httpbin.org/get",
-            "session_id": "test_session_123"
+        self.log_test("Workflow Execution", success, str(response.get('error', '')) if not success else "")
+        
+        # Enhanced workflow execution
+        enhanced_workflow_request = {
+            "workflow_steps": [
+                {"type": "navigate", "params": {"url": "https://httpbin.org/get"}},
+                {"type": "wait", "params": {"duration": 1000}}
+            ],
+            "session_id": self.session_id,
+            "behavior_type": "professional"
         }
         
-        success, response = self.make_request('POST', '/navigate', nav_request)
-        self.log_test("Navigation with Proxy", success, str(response.get('error', '')) if not success else "")
+        success, response = self.make_request('POST', '/workflow/execute-enhanced', enhanced_workflow_request)
+        self.log_test("Enhanced Workflow Execution", success, str(response.get('error', '')) if not success else "")
+        
+        # Check workflow status if workflow was created
+        if workflow_id:
+            time.sleep(2)  # Wait a bit for workflow to process
+            success, response = self.make_request('GET', f'/workflow/{workflow_id}')
+            self.log_test("Get Workflow Status", success, str(response.get('error', '')) if not success else "")
 
     def run_all_tests(self):
         """Run all API tests"""
