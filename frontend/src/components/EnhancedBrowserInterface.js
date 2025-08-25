@@ -198,10 +198,17 @@ const EnhancedBrowserInterface = ({ onBackToWelcome }) => {
         return;
       }
 
-      // Check for workflow building commands
-      if (isWorkflowBuildingCommand(userMessage)) {
-        await handleWorkflowBuilding(userMessage);
-        return;
+      // Check for workflow execution commands
+      if (userMessage.toLowerCase().startsWith('run ') || userMessage.toLowerCase().startsWith('execute ')) {
+        const workflowName = userMessage.replace(/^(run|execute)\s+/i, '').trim();
+        const workflow = builtWorkflows.find(w => 
+          w.name.toLowerCase().includes(workflowName.toLowerCase())
+        );
+        
+        if (workflow) {
+          await handleWorkflowExecution(workflow);
+          return;
+        }
       }
 
       // Standard AI processing with enhanced context
