@@ -1237,17 +1237,6 @@ const EnhancedBrowserInterface = ({ onBackToWelcome }) => {
                   </div>
                 </form>
               </>
-            ) : (
-              /* Visual Workflow Builder Tab */
-              <div className="flex-1 bg-gray-50">
-                <VisualWorkflowBuilder 
-                  onExecuteWorkflow={handleWorkflowExecution}
-                  shadowTasks={shadowTasks}
-                  builtWorkflows={builtWorkflows}
-                  setBuiltWorkflows={setBuiltWorkflows}
-                />
-              </div>
-            )}
             
           </motion.div>
         )}
