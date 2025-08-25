@@ -319,27 +319,69 @@ class UltimateKairoAPITester:
             success, response = self.make_request('GET', f'/workflow/{workflow_id}')
             self.log_test("Get Workflow Status", success, str(response.get('error', '')) if not success else "")
 
+    def test_integration_flows(self):
+        """Test complete integration flows"""
+        print("\n🔗 Testing Complete Integration Flows...")
+        
+        # Test complete AI -> Browser -> Proxy flow for YouTube
+        print("   Testing YouTube Integration Flow...")
+        
+        # Step 1: AI Query to open YouTube
+        ai_query = {
+            "query": "Open YouTube",
+            "context": {"test_flow": "youtube_integration"},
+            "session_id": self.session_id
+        }
+        
+        success, ai_response = self.make_request('POST', '/ai/query', ai_query)
+        self.log_test("Integration Flow - AI Query (YouTube)", success, str(ai_response.get('error', '')) if not success else "")
+        
+        # Step 2: Browser command execution
+        if success:
+            browser_command = {
+                "command": "navigate",
+                "url": "https://www.youtube.com",
+                "session_id": self.session_id
+            }
+            
+            success, browser_response = self.make_request('POST', '/browser/execute', browser_command)
+            self.log_test("Integration Flow - Browser Execute (YouTube)", success, str(browser_response.get('error', '')) if not success else "")
+            
+            # Step 3: Ultimate proxy content loading
+            if success:
+                ultimate_request = {
+                    "url": "https://www.youtube.com",
+                    "method": "GET",
+                    "session_id": self.session_id,
+                    "enhance_rendering": True,
+                    "stealth_level": 5
+                }
+                
+                success, proxy_response = self.make_request('POST', '/ultimate/proxy', ultimate_request, timeout=60)
+                self.log_test("Integration Flow - Ultimate Proxy (YouTube)", success, str(proxy_response.get('error', '')) if not success else "")
+
     def run_all_tests(self):
-        """Run all API tests"""
-        print("🚀 Starting Comprehensive Kairo AI Browser API Tests")
+        """Run all comprehensive API tests"""
+        print("🚀 COMPREHENSIVE ULTIMATE KAIRO AI BROWSER BACKEND TESTING")
         print(f"🎯 Testing against: {self.base_url}")
-        print("=" * 60)
+        print(f"🔧 Session ID: {self.session_id}")
+        print("=" * 80)
         
         start_time = time.time()
         
-        # Run all test suites
-        self.test_basic_endpoints()
-        self.test_ai_query_endpoint()
-        self.test_enhanced_search_endpoints()
-        self.test_agent_builder_endpoints()
-        self.test_report_generation_endpoints()
-        self.test_accessibility_endpoints()
-        self.test_shadow_browser_endpoints()
-        self.test_memory_endpoints()
-        self.test_intelligence_endpoints()
-        self.test_workspace_endpoints()
-        self.test_browser_endpoints()
-        self.test_proxy_endpoints()
+        # Run all test suites in order of importance
+        self.test_health_endpoints()
+        self.test_ai_endpoints()
+        self.test_ultimate_proxy_system()
+        self.test_enhanced_proxy_endpoints()
+        self.test_real_interaction_engine()
+        self.test_advanced_rendering_system()
+        self.test_system_analytics()
+        self.test_voice_and_image_processing()
+        self.test_stealth_capabilities()
+        self.test_browser_functionality()
+        self.test_workflow_execution()
+        self.test_integration_flows()
         
         end_time = time.time()
         duration = end_time - start_time
