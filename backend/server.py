@@ -386,10 +386,11 @@ async def get_active_sessions():
 @app.post("/api/proxy/browser")
 async def proxy_with_browser(request_data: Dict[str, Any]):
     """Advanced proxy using headless browser for JavaScript-heavy sites with enhanced anti-detection"""
+    url = request_data.get("url")
+    if not url:
+        raise HTTPException(status_code=400, detail="URL required")
+    
     try:
-        url = request_data.get("url")
-        if not url:
-            raise HTTPException(status_code=400, detail="URL required")
         
         async with async_playwright() as p:
             # Launch browser with enhanced stealth configuration
