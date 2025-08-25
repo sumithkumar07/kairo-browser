@@ -1167,40 +1167,11 @@ const EnhancedBrowserInterface = ({ onBackToWelcome }) => {
                     </button>
                   </div>
                 </div>
-                
-                {/* Tab Navigation */}
-                <div className="flex space-x-1 mb-1">
-                  <button
-                    onClick={() => setChatMode('chat')}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-t-lg text-sm font-medium transition-all ${
-                      chatMode === 'chat' 
-                        ? 'bg-white text-green-600 shadow-sm' 
-                        : 'text-green-100 hover:text-white hover:bg-white/10'
-                    }`}
-                  >
-                    <MessageSquare className="w-4 h-4" />
-                    <span>Chat</span>
-                  </button>
-                  <button
-                    onClick={() => setChatMode('builder')}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-t-lg text-sm font-medium transition-all ${
-                      chatMode === 'builder' 
-                        ? 'bg-white text-green-600 shadow-sm' 
-                        : 'text-green-100 hover:text-white hover:bg-white/10'
-                    }`}
-                  >
-                    <Workflow className="w-4 h-4" />
-                    <span>Builder</span>
-                  </button>
-                </div>
               </div>
             </div>
 
-            {/* Dynamic Content Based on Tab */}
-            {chatMode === 'chat' ? (
-              <>
-                {/* Enhanced Chat Messages */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+            {/* Enhanced Chat Messages */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
                   {chatMessages.map((message, index) => (
                     <motion.div
                       key={index}
