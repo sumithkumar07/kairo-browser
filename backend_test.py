@@ -95,18 +95,32 @@ class UltimateKairoAPITester:
         success, response = self.make_request('POST', '/ai/multimodal-query', multimodal_query)
         self.log_test("Enhanced Multimodal AI Query", success, str(response.get('error', '')) if not success else "")
 
-    def test_enhanced_search_endpoints(self):
-        """Test enhanced search capabilities"""
-        print("\n🔍 Testing Enhanced Search Endpoints...")
+    def test_ultimate_proxy_system(self):
+        """Test ultimate proxy system with all 6 phases"""
+        print("\n🚀 Testing Ultimate Proxy System (All 6 Phases)...")
         
-        # Deep search
-        search_request = {
-            "query": "AI trends 2024",
-            "config": {"sources": ["google", "bing"], "max_results": 5}
+        # Ultimate proxy request for YouTube
+        ultimate_request = {
+            "url": "https://www.youtube.com",
+            "method": "GET",
+            "context": {"test": "ultimate_proxy"},
+            "session_id": self.session_id,
+            "enhance_rendering": True,
+            "stealth_level": 5
         }
         
-        success, response = self.make_request('POST', '/search/deep', search_request, timeout=60)
-        self.log_test("Deep Search", success, str(response.get('error', '')) if not success else "")
+        success, response = self.make_request('POST', '/ultimate/proxy', ultimate_request, timeout=60)
+        self.log_test("Ultimate Proxy - YouTube", success, str(response.get('error', '')) if not success else "")
+        
+        # Ultimate proxy request for Google
+        ultimate_request["url"] = "https://www.google.com"
+        success, response = self.make_request('POST', '/ultimate/proxy', ultimate_request, timeout=60)
+        self.log_test("Ultimate Proxy - Google", success, str(response.get('error', '')) if not success else "")
+        
+        # Ultimate proxy request for Wikipedia
+        ultimate_request["url"] = "https://en.wikipedia.org"
+        success, response = self.make_request('POST', '/ultimate/proxy', ultimate_request, timeout=60)
+        self.log_test("Ultimate Proxy - Wikipedia", success, str(response.get('error', '')) if not success else "")
 
     def test_agent_builder_endpoints(self):
         """Test agent builder capabilities"""
