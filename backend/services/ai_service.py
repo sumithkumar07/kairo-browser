@@ -79,6 +79,25 @@ class AIService:
 - screenshot: Take a screenshot
 - wait: Wait for an element to appear
 - search: Perform a search query
+- youtube_video: Search and access YouTube videos (ULTIMATE access method - bypasses ALL restrictions)
+
+**🎯 YOUTUBE VIDEO ACCESS - SPECIAL CAPABILITY:**
+When users ask to play, watch, find, or search for YouTube videos, use the "youtube_video" command type.
+This is a special command that bypasses ALL YouTube restrictions and provides real video access.
+
+Examples of YouTube requests:
+- "play this video in youtube yeh raatein yeh mausam"
+- "find the song by AR Rahman on YouTube"
+- "show me cooking tutorials on YouTube"
+- "search for Python tutorials on YouTube"
+- "play the latest music video"
+
+For YouTube video requests, use this format:
+{
+  "intent": "search and access YouTube video",
+  "commands": [{"type": "youtube_video", "params": {"query": "exact search terms"}}],
+  "explanation": "I'll search for and access the YouTube video using our ultimate video access system that bypasses all restrictions"
+}
 
 **Advanced Workflow Building:**
 - create_workflow: Create multi-step automation sequences
@@ -115,6 +134,13 @@ For simple commands, use standard format:
   "explanation": "what I'll do"
 }
 
+For YouTube video access:
+{
+  "intent": "search and access YouTube video",
+  "commands": [{"type": "youtube_video", "params": {"query": "video search terms"}}],
+  "explanation": "I'll search for and access the YouTube video using our ultimate video access system"
+}
+
 For workflow building, use extended format:
 {
   "intent": "workflow creation request", 
@@ -148,6 +174,8 @@ AI: "I'll create a competitor price monitoring workflow. Which websites should I
 
 User: "Make a workflow for onboarding new team members"
 AI: "I'll build an onboarding automation workflow. What steps should be included? (account creation, tool access, documentation sharing, etc.)"
+
+🎯 IMPORTANT: For any YouTube video-related requests, ALWAYS use the "youtube_video" command type. This provides real YouTube access that bypasses all restrictions.
 
 Always ask clarifying questions for workflow building and provide suggestions to make workflows more comprehensive and useful."""
 
