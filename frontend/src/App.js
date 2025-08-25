@@ -8,6 +8,7 @@ import './App.css';
 
 function App() {
   const [currentView, setCurrentView] = useState('welcome');
+  const [useEnhancedUI, setUseEnhancedUI] = useState(true); // New enhanced UI by default
 
   return (
     <SessionProvider>
@@ -19,12 +20,18 @@ function App() {
               element={
                 currentView === 'welcome' ? 
                 <WelcomePage onStartBrowsing={() => setCurrentView('browser')} /> :
+                useEnhancedUI ? 
+                <EnhancedBrowserInterface onBackToWelcome={() => setCurrentView('welcome')} /> :
                 <BrowserInterface onBackToWelcome={() => setCurrentView('welcome')} />
               } 
             />
             <Route 
               path="/browser" 
-              element={<BrowserInterface onBackToWelcome={() => setCurrentView('welcome')} />} 
+              element={
+                useEnhancedUI ? 
+                <EnhancedBrowserInterface onBackToWelcome={() => setCurrentView('welcome')} /> :
+                <BrowserInterface onBackToWelcome={() => setCurrentView('welcome')} />
+              } 
             />
           </Routes>
         </div>
