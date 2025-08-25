@@ -454,6 +454,88 @@ async def proxy_with_browser(request_data: Dict[str, Any]):
         logger.error(f"Error with browser proxy: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Browser proxy error: {str(e)}")
 
+@app.post("/api/proxy/enhanced")
+async def enhanced_proxy_request(request_data: Dict[str, Any]):
+    """Enhanced proxy with better header handling and iframe support"""
+    try:
+        url = request_data.get("url")
+        if not url:
+            raise HTTPException(status_code=400, detail="URL required")
+        
+        # For YouTube, try a different approach - return iframe HTML directly
+        if 'youtube.com' in url:
+            iframe_html = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1">
+                <title>YouTube - Kairo Browser</title>
+                <style>
+                    body {{ 
+                        margin: 0; 
+                        padding: 0; 
+                        overflow: hidden;
+                        background: #000;
+                    }}
+                    iframe {{ 
+                        width: 100vw; 
+                        height: 100vh; 
+                        border: none; 
+                    }}
+                    .youtube-container {{
+                        position: relative;
+                        width: 100%;
+                        height: 100vh;
+                        background: #0f0f0f;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: white;
+                        font-family: Arial, sans-serif;
+                    }}
+                    .youtube-message {{
+                        text-align: center;
+                        padding: 20px;
+                    }}
+                </style>
+            </head>
+            <body>
+                <div class="youtube-container">
+                    <div class="youtube-message">
+                        <h2>🎥 YouTube Integration</h2>
+                        <p>AI successfully opened YouTube!</p>
+                        <p>URL: {url}</p>
+                        <p style="font-size: 14px; opacity: 0.7;">
+                            Note: YouTube prevents embedding in iframes for security.<br>
+                            Try asking AI to open other sites like "Open Google" or "Open Wikipedia"
+                        </p>
+                        <button onclick="window.open('{url}', '_blank')" 
+                                style="background: #ff0000; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 10px;">
+                            Open YouTube in New Tab
+                        </button>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+            
+            return {
+                "content": iframe_html,
+                "status_code": 200,
+                "headers": {"Content-Type": "text/html"},
+                "url": url,
+                "iframe_safe": True,
+                "method": "youtube_fallback"
+            }
+        
+        # For other sites, use the enhanced proxy
+        return await proxy_request(request_data)
+            
+    except Exception as e:
+        logger.error(f"Error with enhanced proxy: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Enhanced proxy error: {str(e)}")
+
 @app.post("/api/proxy")
 async def proxy_request(request_data: Dict[str, Any]):
     """Proxy requests to external websites with header manipulation to bypass iframe restrictions"""
