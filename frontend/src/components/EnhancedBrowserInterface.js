@@ -162,7 +162,7 @@ const EnhancedBrowserInterface = ({ onBackToWelcome }) => {
     }
   }, [urlInput, navigateToUrl, proxyRequest]);
 
-  // Enhanced AI chat handler with new capabilities
+  // Enhanced AI chat handler with advanced workflow building capabilities
   const handleAIChat = useCallback(async (e) => {
     e.preventDefault();
     if (!currentMessage.trim()) return;
@@ -198,7 +198,13 @@ const EnhancedBrowserInterface = ({ onBackToWelcome }) => {
         return;
       }
 
-      // Standard AI processing
+      // Check for workflow building commands
+      if (isWorkflowBuildingCommand(userMessage)) {
+        await handleWorkflowBuilding(userMessage);
+        return;
+      }
+
+      // Standard AI processing with enhanced context
       const aiResponse = await processAIQuery(userMessage, {
         currentUrl: currentUrl,
         sessionId: sessionId,
@@ -209,6 +215,12 @@ const EnhancedBrowserInterface = ({ onBackToWelcome }) => {
           bookmarks: bookmarks.length
         }
       });
+
+      // Handle workflow creation response
+      if (aiResponse.workflow) {
+        await handleWorkflowCreationResponse(aiResponse);
+        return;
+      }
 
       let responseText = aiResponse.explanation || 'I understand your request.';
       
