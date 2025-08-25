@@ -1,10 +1,12 @@
 """
-Enhanced proxy service with smart routing and anti-detection capabilities
+Ultra-Enhanced Proxy Service with Advanced Anti-Detection & Website Access
 """
 import asyncio
 import logging
+import random
+import time
 from typing import Dict, Any, Optional, List
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 import httpx
 from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright
@@ -12,12 +14,14 @@ from config import settings
 
 logger = logging.getLogger(__name__)
 
-class ProxyService:
-    """Enhanced proxy service with multiple methods"""
+class UltraProxyService:
+    """Ultra-enhanced proxy service with advanced anti-detection"""
     
     def __init__(self):
         self.http_client = None
-        logger.info("✅ Proxy service initialized")
+        self.user_agents = self._get_real_user_agents()
+        self.proxy_sessions = {}
+        logger.info("🚀 Ultra-Enhanced Proxy Service initialized with advanced anti-detection")
     
     def _get_real_user_agents(self) -> List[str]:
         """Get list of real user agents for rotation"""
@@ -637,4 +641,4 @@ class ProxyService:
         }
 
 # Global proxy service instance
-proxy_service = ProxyService()
+proxy_service = UltraProxyService()
