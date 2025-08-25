@@ -481,5 +481,41 @@ async def test_stealth_capabilities(domain: str):
 import time
 import random
 
+# 🎯 ULTIMATE YOUTUBE ACCESS - 100% FREE SOLUTION
+@router.post("/ultimate/youtube")
+async def ultimate_youtube_access(request: UltimateYouTubeRequest):
+    """🎯 Ultimate YouTube access - bypasses ALL restrictions for FREE"""
+    try:
+        logger.info(f"🎯 Ultimate YouTube request: {request.query}")
+        
+        # Use the ultimate YouTube service
+        result = await ultimate_youtube_service.search_and_access_youtube_video(
+            query=request.query,
+            session_id=request.session_id
+        )
+        
+        return {
+            "success": result["success"],
+            "method": "ultimate_youtube_access",
+            "video_found": result.get("video_found", False),
+            "video_title": result.get("video_title", ""),
+            "video_url": result.get("video_url", ""),
+            "search_query": request.query,
+            "screenshot": result.get("screenshot", ""),
+            "metadata": result.get("metadata", {}),
+            "content": result.get("content", ""),
+            "session_id": request.session_id,
+            "response_time": result.get("response_time", 0),
+            "error": result.get("error") if not result["success"] else None,
+            "fallback_search": result.get("fallback_search") if not result["success"] else None
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Ultimate YouTube access failed: {e}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Ultimate YouTube access failed: {str(e)}"
+        )
+
 # Export router
 __all__ = ['router']
