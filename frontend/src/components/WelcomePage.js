@@ -34,13 +34,13 @@ const WelcomePage = ({ onStartBrowsing }) => {
       icon: Bot,
       iconBg: 'bg-blue-100', 
       iconColor: 'text-blue-600',
-      title: 'AI Assistant',
-      description: 'Smart commands to open and interact with websites',
+      title: 'Smart AI Assistant',
+      description: 'Enhanced AI with context awareness and advanced commands',
       details: [
-        'Natural language commands',
-        'Automated web interactions',
-        'Context-aware assistance',
-        'Learning from your behavior'
+        'Advanced natural language processing',
+        'Context-aware responses',
+        'Quick command shortcuts',
+        'Multi-session memory'
       ]
     },
     {
