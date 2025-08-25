@@ -1,0 +1,630 @@
+"""
+Enhanced proxy service with smart routing and anti-detection capabilities
+"""
+import asyncio
+import logging
+from typing import Dict, Any, Optional
+from urllib.parse import urljoin
+import httpx
+from bs4 import BeautifulSoup
+from playwright.async_api import async_playwright
+from config import settings
+
+logger = logging.getLogger(__name__)
+
+class ProxyService:
+    """Enhanced proxy service with multiple methods"""
+    
+    def __init__(self):
+        self.http_client = None
+        logger.info("✅ Proxy service initialized")
+    
+    async def route_request(self, url: str, method: str = "GET", headers: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
+        """Smart routing based on site characteristics"""
+        try:
+            logger.info(f"🔍 Routing request for: {url}")
+            
+            # Determine best proxy method
+            if self._requires_browser_engine(url):
+                logger.info("📱 Using enhanced browser engine for JavaScript-heavy site")
+                return await self.browser_proxy(url, headers)
+            else:
+                logger.info("🌐 Using enhanced HTTP proxy for regular site")
+                try:
+                    return await self.enhanced_http_proxy(url, headers)
+                except Exception as http_error:
+                    logger.warning(f"HTTP proxy failed, falling back to browser engine: {http_error}")
+                    return await self.browser_proxy(url, headers)
+                    
+        except Exception as e:
+            logger.error(f"❌ All proxy methods failed for {url}: {e}")
+            return await self._fallback_response(url, str(e))
+    
+    def _requires_browser_engine(self, url: str) -> bool:
+        """Check if site requires browser engine"""
+        return any(site in url.lower() for site in settings.HEAVY_JS_SITES)
+    
+    async def enhanced_http_proxy(self, url: str, custom_headers: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
+        """Enhanced HTTP proxy with anti-detection measures"""
+        try:
+            headers = self._get_browser_headers()
+            if custom_headers:
+                headers.update(custom_headers)
+            
+            async with httpx.AsyncClient(
+                timeout=settings.HTTP_TIMEOUT,
+                follow_redirects=True,
+                limits=httpx.Limits(max_keepalive_connections=5, max_connections=settings.MAX_CONNECTIONS)
+            ) as client:
+                response = await client.get(url, headers=headers)
+                
+                # Process and enhance HTML
+                enhanced_content = await self._process_html_content(response.text, url)
+                
+                # Clean response headers
+                clean_headers = self._clean_response_headers(response.headers)
+                
+                return {
+                    "content": enhanced_content,
+                    "status_code": response.status_code,
+                    "headers": clean_headers,
+                    "url": str(response.url),
+                    "method": "enhanced_http_proxy",
+                    "iframe_safe": True,
+                    "anti_detection": True
+                }
+                
+        except Exception as e:
+            logger.error(f"❌ Enhanced HTTP proxy failed: {e}")
+            raise
+    
+    async def browser_proxy(self, url: str, custom_headers: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
+        """Advanced browser proxy using Playwright with enhanced anti-detection"""
+        try:
+            async with async_playwright() as p:
+                # Launch browser with stealth configuration
+                browser = await p.chromium.launch(
+                    headless=True,
+                    args=self._get_browser_args()
+                )
+                
+                # Enhanced browser context
+                context = await browser.new_context(
+                    viewport={'width': 1920, 'height': 1080},
+                    user_agent=self._get_stealth_user_agent(),
+                    locale='en-US',
+                    timezone_id='America/New_York',
+                    permissions=['geolocation'],
+                    extra_http_headers=self._get_stealth_headers(custom_headers)
+                )
+                
+                # Add anti-detection script
+                await context.add_init_script(self._get_anti_detection_script())
+                
+                page = await context.new_page()
+                
+                # Navigate with enhanced options
+                try:
+                    await page.goto(url, wait_until='networkidle', timeout=settings.BROWSER_TIMEOUT)
+                    await page.wait_for_timeout(5000)  # Wait for dynamic content
+                    
+                    # Try to wait for main content
+                    try:
+                        await page.wait_for_selector('body', timeout=10000)
+                    except:
+                        pass  # Continue with whatever loaded
+                        
+                except Exception as nav_error:
+                    logger.warning(f"Navigation warning for {url}: {nav_error}")
+                
+                # Get rendered content
+                content = await page.content()
+                
+                # Enhanced HTML processing
+                enhanced_content = await self._process_browser_content(content, url)
+                
+                await browser.close()
+                
+                return {
+                    "content": enhanced_content,
+                    "status_code": 200,
+                    "headers": {"Content-Type": "text/html; charset=utf-8"},
+                    "url": url,
+                    "method": "enhanced_browser_rendered",
+                    "iframe_safe": True,
+                    "anti_detection": True,
+                    "javascript_rendered": True
+                }
+                
+        except Exception as e:
+            logger.error(f"❌ Browser proxy failed: {e}")
+            raise
+    
+    async def _process_html_content(self, html: str, base_url: str) -> str:
+        """Process and enhance HTML content for iframe compatibility"""
+        try:
+            soup = BeautifulSoup(html, 'html.parser')
+            
+            # Remove problematic meta tags
+            self._remove_blocking_meta_tags(soup)
+            
+            # Remove frame-busting scripts
+            self._remove_frame_busting_scripts(soup)
+            
+            # Add base tag and enhanced headers
+            self._add_base_and_headers(soup, base_url)
+            
+            # Rewrite links and forms
+            self._rewrite_links_and_forms(soup, base_url)
+            
+            # Add enhanced compatibility styles and scripts
+            self._add_compatibility_enhancements(soup, "http_proxy")
+            
+            return str(soup)
+            
+        except Exception as e:
+            logger.error(f"HTML processing failed: {e}")
+            return html
+    
+    async def _process_browser_content(self, html: str, base_url: str) -> str:
+        """Process browser-rendered content"""
+        try:
+            soup = BeautifulSoup(html, 'html.parser')
+            
+            # Enhanced processing for browser-rendered content
+            self._remove_blocking_meta_tags(soup)
+            self._remove_frame_busting_scripts(soup)
+            self._add_base_and_headers(soup, base_url)
+            self._rewrite_links_and_forms(soup, base_url)
+            self._add_compatibility_enhancements(soup, "browser_rendered")
+            
+            return str(soup)
+            
+        except Exception as e:
+            logger.error(f"Browser content processing failed: {e}")
+            return html
+    
+    def _get_browser_headers(self) -> Dict[str, str]:
+        """Get enhanced browser headers"""
+        return {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1',
+            'Upgrade-Insecure-Requests': '1',
+            'Connection': 'keep-alive',
+            'DNT': '1',
+            'Sec-CH-UA': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+            'Sec-CH-UA-Mobile': '?0',
+            'Sec-CH-UA-Platform': '"Windows"'
+        }
+    
+    def _get_browser_args(self) -> list:
+        """Get browser launch arguments"""
+        return [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-accelerated-2d-canvas',
+            '--no-first-run',
+            '--no-zygote',
+            '--disable-gpu',
+            '--disable-background-timer-throttling',
+            '--disable-backgrounding-occluded-windows',
+            '--disable-renderer-backgrounding',
+            '--disable-features=TranslateUI',
+            '--disable-ipc-flooding-protection',
+            '--disable-blink-features=AutomationControlled',
+            '--disable-web-security',
+            '--disable-features=VizDisplayCompositor'
+        ]
+    
+    def _get_stealth_user_agent(self) -> str:
+        """Get stealth user agent"""
+        return 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    
+    def _get_stealth_headers(self, custom_headers: Optional[Dict[str, str]] = None) -> Dict[str, str]:
+        """Get stealth headers for browser"""
+        headers = {
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1',
+            'Upgrade-Insecure-Requests': '1'
+        }
+        if custom_headers:
+            headers.update(custom_headers)
+        return headers
+    
+    def _get_anti_detection_script(self) -> str:
+        """Get comprehensive anti-detection script"""
+        return """
+            // Enhanced anti-detection measures
+            Object.defineProperty(navigator, 'webdriver', {
+                get: () => undefined,
+            });
+            
+            window.chrome = {
+                runtime: {},
+            };
+            
+            Object.defineProperty(navigator, 'languages', {
+                get: () => ['en-US', 'en'],
+            });
+            
+            Object.defineProperty(navigator, 'plugins', {
+                get: () => [1, 2, 3, 4, 5],
+            });
+            
+            // Remove automation indicators
+            delete navigator.__proto__.webdriver;
+            
+            // Override permission methods
+            const originalQuery = window.navigator.permissions.query;
+            window.navigator.permissions.query = (parameters) => (
+                parameters.name === 'notifications' ?
+                    Promise.resolve({ state: Notification.permission }) :
+                    originalQuery(parameters)
+            );
+        """
+    
+    def _remove_blocking_meta_tags(self, soup):
+        """Remove meta tags that block iframe embedding"""
+        for meta in soup.find_all('meta'):
+            http_equiv = meta.get('http-equiv', '').lower()
+            content = meta.get('content', '').lower()
+            
+            if http_equiv in ['x-frame-options', 'content-security-policy'] or \
+               'frame-options' in content or 'sameorigin' in content or 'deny' in content:
+                meta.decompose()
+    
+    def _remove_frame_busting_scripts(self, soup):
+        """Remove frame-busting JavaScript"""
+        blocking_patterns = [
+            'top.location', 'frameElement', 'self !== top', 'parent.frames',
+            'window.top', 'top != self', 'parent != window', 'top != window',
+            'self != top', 'frameElement != null', 'window.frameElement',
+            'parent.document', 'top.document', 'window.parent'
+        ]
+        
+        for script in soup.find_all('script'):
+            script_content = script.string or ''
+            if any(pattern in script_content for pattern in blocking_patterns):
+                script.string = '/* Frame compatibility - script modified by Kairo Browser */'
+    
+    def _add_base_and_headers(self, soup, base_url: str):
+        """Add base tag and iframe-friendly headers"""
+        if soup.head:
+            # Base tag
+            base_tag = soup.new_tag("base", href=base_url)
+            soup.head.insert(0, base_tag)
+            
+            # Permissive CSP
+            csp_meta = soup.new_tag("meta")
+            csp_meta.attrs['http-equiv'] = 'Content-Security-Policy'
+            csp_meta.attrs['content'] = "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; frame-ancestors *; frame-src *;"
+            soup.head.append(csp_meta)
+            
+            # X-Frame-Options override
+            frame_options = soup.new_tag("meta")
+            frame_options.attrs['http-equiv'] = 'X-Frame-Options'
+            frame_options.attrs['content'] = 'ALLOWALL'
+            soup.head.append(frame_options)
+    
+    def _rewrite_links_and_forms(self, soup, base_url: str):
+        """Rewrite links and forms for proxy handling"""
+        # Rewrite links
+        for link in soup.find_all(['a', 'link']):
+            href = link.get('href')
+            if href and not href.startswith('#') and not href.startswith('javascript:'):
+                full_url = self._resolve_url(href, base_url)
+                link['data-proxy-url'] = full_url
+                link['href'] = '#'
+        
+        # Rewrite forms
+        for form in soup.find_all('form'):
+            action = form.get('action')
+            if action and not action.startswith('#') and not action.startswith('javascript:'):
+                full_url = self._resolve_url(action, base_url)
+                form['data-proxy-action'] = full_url
+                form['action'] = '#'
+    
+    def _resolve_url(self, url: str, base_url: str) -> str:
+        """Resolve relative URLs to absolute"""
+        if url.startswith('//'):
+            return 'https:' + url
+        elif url.startswith('/'):
+            return urljoin(base_url, url)
+        elif not url.startswith(('http:', 'https:')):
+            return urljoin(base_url, url)
+        return url
+    
+    def _add_compatibility_enhancements(self, soup, proxy_type: str):
+        """Add CSS and JavaScript enhancements"""
+        # Enhanced CSS
+        style_tag = soup.new_tag("style")
+        style_tag.string = self._get_compatibility_css()
+        
+        if soup.head:
+            soup.head.append(style_tag)
+        elif soup.body:
+            soup.body.insert(0, style_tag)
+        
+        # Enhanced JavaScript
+        js_tag = soup.new_tag("script")
+        js_tag.string = self._get_compatibility_js(proxy_type)
+        
+        if soup.body:
+            soup.body.append(js_tag)
+    
+    def _get_compatibility_css(self) -> str:
+        """Get enhanced compatibility CSS"""
+        return """
+            /* Kairo Browser Enhanced Compatibility Styles */
+            body { 
+                margin: 0 !important; 
+                padding: 0 !important; 
+                overflow-x: auto !important;
+                min-height: 100vh !important;
+                width: 100% !important;
+            }
+            
+            * { 
+                box-sizing: border-box !important; 
+            }
+            
+            /* Fix iframe breaking elements */
+            iframe, embed, object { 
+                max-width: 100% !important; 
+            }
+            
+            /* Prevent fixed positioning issues */
+            .fixed-header, .fixed-nav, .sticky-header, 
+            [style*="position: fixed"], [class*="fixed"], [id*="fixed"] {
+                position: relative !important;
+                top: auto !important;
+                left: auto !important;
+                right: auto !important;
+                bottom: auto !important;
+                z-index: auto !important;
+            }
+            
+            /* Ensure content visibility */
+            [style*="display: none"], [style*="visibility: hidden"] {
+                display: block !important;
+                visibility: visible !important;
+            }
+            
+            /* Override breakout attempts */
+            .breakout, .fullscreen, [class*="overlay"], [id*="overlay"] {
+                position: relative !important;
+                width: 100% !important;
+                height: auto !important;
+            }
+        """
+    
+    def _get_compatibility_js(self, proxy_type: str) -> str:
+        """Get enhanced compatibility JavaScript"""
+        return f"""
+            // Kairo Browser Enhanced Navigation Interception
+            (function() {{
+                'use strict';
+                
+                console.log('Kairo Browser: Loading enhanced compatibility for {proxy_type}');
+                
+                try {{
+                    // Override frame detection
+                    Object.defineProperty(window, 'top', {{
+                        get: function() {{ return window.self; }},
+                        set: function() {{}},
+                        configurable: false
+                    }});
+                    
+                    Object.defineProperty(window, 'parent', {{
+                        get: function() {{ return window.self; }},
+                        set: function() {{}},
+                        configurable: false
+                    }});
+                    
+                    Object.defineProperty(window, 'frameElement', {{
+                        get: function() {{ return null; }},
+                        set: function() {{}},
+                        configurable: false
+                    }});
+                    
+                    // Intercept navigation attempts
+                    const originalOpen = window.open;
+                    window.open = function(url, target, features) {{
+                        console.log('Kairo Browser: Intercepted window.open to', url);
+                        if (window.parent && window.parent.postMessage) {{
+                            window.parent.postMessage({{
+                                type: 'NAVIGATE_TO',
+                                url: url
+                            }}, '*');
+                        }}
+                        return null;
+                    }};
+                    
+                    // Override location methods
+                    ['replace', 'assign'].forEach(method => {{
+                        const original = window.location[method];
+                        window.location[method] = function(url) {{
+                            console.log(`Kairo Browser: Intercepted location.${{method}} to`, url);
+                            if (window.parent && window.parent.postMessage) {{
+                                window.parent.postMessage({{
+                                    type: 'NAVIGATE_TO',
+                                    url: url
+                                }}, '*');
+                            }}
+                        }};
+                    }});
+                    
+                    // Enhanced link click interception
+                    document.addEventListener('click', function(e) {{
+                        var target = e.target;
+                        
+                        while (target && target.tagName !== 'A') {{
+                            target = target.parentElement;
+                        }}
+                        
+                        if (target && target.tagName === 'A') {{
+                            var proxyUrl = target.getAttribute('data-proxy-url');
+                            var href = target.getAttribute('href');
+                            
+                            if (proxyUrl || (href && href !== '#' && !href.startsWith('javascript:'))) {{
+                                e.preventDefault();
+                                e.stopPropagation();
+                                
+                                var navigateUrl = proxyUrl || href;
+                                console.log('Kairo Browser: Intercepted link click to', navigateUrl);
+                                
+                                if (window.parent && window.parent.postMessage) {{
+                                    window.parent.postMessage({{
+                                        type: 'NAVIGATE_TO',
+                                        url: navigateUrl
+                                    }}, '*');
+                                }}
+                            }}
+                        }}
+                    }}, true);
+                    
+                    // Form submission interception
+                    document.addEventListener('submit', function(e) {{
+                        var form = e.target;
+                        if (form && form.tagName === 'FORM') {{
+                            var proxyAction = form.getAttribute('data-proxy-action');
+                            if (proxyAction) {{
+                                e.preventDefault();
+                                
+                                var formData = new FormData(form);
+                                var params = new URLSearchParams();
+                                for (var pair of formData.entries()) {{
+                                    params.append(pair[0], pair[1]);
+                                }}
+                                
+                                var finalUrl = proxyAction;
+                                if (form.method.toLowerCase() === 'get' && params.toString()) {{
+                                    finalUrl += (proxyAction.includes('?') ? '&' : '?') + params.toString();
+                                }}
+                                
+                                if (window.parent && window.parent.postMessage) {{
+                                    window.parent.postMessage({{
+                                        type: 'NAVIGATE_TO',
+                                        url: finalUrl
+                                    }}, '*');
+                                }}
+                            }}
+                        }}
+                    }}, true);
+                    
+                    console.log('Kairo Browser: Enhanced navigation interception loaded');
+                    
+                }} catch (e) {{
+                    console.log('Kairo Browser compatibility error:', e);
+                }}
+            }})();
+        """
+    
+    def _clean_response_headers(self, headers) -> Dict[str, str]:
+        """Clean response headers for iframe compatibility"""
+        clean_headers = {}
+        blocked_headers = ['x-frame-options', 'content-security-policy', 'x-content-type-options']
+        
+        for key, value in headers.items():
+            if key.lower() not in blocked_headers:
+                clean_headers[key] = value
+        
+        # Add iframe-friendly headers
+        clean_headers['X-Frame-Options'] = 'ALLOWALL'
+        clean_headers['Content-Security-Policy'] = "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; frame-ancestors *;"
+        
+        return clean_headers
+    
+    async def _fallback_response(self, url: str, error: str) -> Dict[str, Any]:
+        """Fallback response when all proxy methods fail"""
+        fallback_html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Kairo Browser - Content Loading</title>
+            <meta charset="utf-8">
+            <style>
+                body {{
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+                    margin: 0;
+                    padding: 40px;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    text-align: center;
+                    min-height: 100vh;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                }}
+                .container {{
+                    background: rgba(255, 255, 255, 0.1);
+                    padding: 30px;
+                    border-radius: 15px;
+                    backdrop-filter: blur(10px);
+                    max-width: 500px;
+                }}
+                .icon {{ font-size: 48px; margin-bottom: 20px; }}
+                h1 {{ margin: 0 0 15px 0; font-size: 24px; }}
+                p {{ margin: 10px 0; opacity: 0.9; }}
+                .url {{ 
+                    background: rgba(255, 255, 255, 0.2); 
+                    padding: 10px; 
+                    border-radius: 8px; 
+                    word-break: break-all; 
+                    font-family: monospace;
+                }}
+                .retry {{
+                    background: #4CAF50;
+                    color: white;
+                    border: none;
+                    padding: 12px 24px;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    margin-top: 20px;
+                    font-size: 16px;
+                }}
+                .retry:hover {{ background: #45a049; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="icon">🌐</div>
+                <h1>Content Loading</h1>
+                <p>Kairo Browser is working to load content from:</p>
+                <div class="url">{url}</div>
+                <p><small>If the site has restrictions, try using the AI assistant for alternative access methods.</small></p>
+                <button class="retry" onclick="location.reload()">Retry Loading</button>
+            </div>
+        </body>
+        </html>
+        """
+        
+        return {
+            "content": fallback_html,
+            "status_code": 200,
+            "headers": {"Content-Type": "text/html; charset=utf-8"},
+            "url": url,
+            "method": "fallback",
+            "iframe_safe": True,
+            "error": error
+        }
+
+# Global proxy service instance
+proxy_service = ProxyService()
