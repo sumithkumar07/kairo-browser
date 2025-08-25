@@ -233,24 +233,32 @@ class UltimateKairoAPITester:
             success, response = self.make_request('GET', f'/stealth/test/{domain}', timeout=45)
             self.log_test(f"Stealth Test - {domain}", success, str(response.get('error', '')) if not success else "")
 
-    def test_workspace_endpoints(self):
-        """Test workspace management"""
-        print("\n🏢 Testing Workspace Endpoints...")
+    def test_browser_functionality(self):
+        """Test browser functionality"""
+        print("\n🌐 Testing Browser Functionality...")
         
-        # Create workspace
-        workspace_request = {
-            "name": "Test Workspace",
-            "description": "A test workspace for API testing",
-            "user_id": "test_user_123",
-            "settings": {"theme": "dark", "auto_save": True}
+        # Execute browser command
+        browser_command = {
+            "command": "navigate",
+            "url": "https://httpbin.org/get",
+            "session_id": self.session_id
         }
         
-        success, response = self.make_request('POST', '/workspaces/create', workspace_request)
-        self.log_test("Create Workspace", success, str(response.get('error', '')) if not success else "")
+        success, response = self.make_request('POST', '/browser/execute', browser_command)
+        self.log_test("Browser Command Execution", success, str(response.get('error', '')) if not success else "")
         
-        # List user workspaces
-        success, response = self.make_request('GET', '/workspaces/user/test_user_123')
-        self.log_test("List User Workspaces", success, str(response.get('error', '')) if not success else "")
+        # Get active sessions
+        success, response = self.make_request('GET', '/sessions')
+        self.log_test("Get Active Sessions", success, str(response.get('error', '')) if not success else "")
+        
+        # Navigation with proxy
+        nav_request = {
+            "url": "https://httpbin.org/get",
+            "session_id": self.session_id
+        }
+        
+        success, response = self.make_request('POST', '/navigate', nav_request)
+        self.log_test("Navigation with Proxy", success, str(response.get('error', '')) if not success else "")
 
     def test_browser_endpoints(self):
         """Test browser functionality"""
