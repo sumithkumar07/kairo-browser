@@ -3,7 +3,7 @@ Enhanced proxy service with smart routing and anti-detection capabilities
 """
 import asyncio
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from urllib.parse import urljoin
 import httpx
 from bs4 import BeautifulSoup
