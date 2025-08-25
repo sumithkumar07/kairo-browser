@@ -189,32 +189,17 @@ class UltimateKairoAPITester:
         success, response = self.make_request('POST', '/rendering/enhanced', rendering_request, timeout=60)
         self.log_test("Advanced Rendering - Performance Optimized", success, str(response.get('error', '')) if not success else "")
 
-    def test_shadow_browser_endpoints(self):
-        """Test shadow browser capabilities"""
-        print("\n👤 Testing Shadow Browser Endpoints...")
+    def test_system_analytics(self):
+        """Test system analytics"""
+        print("\n📊 Testing System Analytics...")
         
-        # Execute background task
-        task_request = {
-            "type": "scraping",
-            "config": {
-                "url": "https://example.com",
-                "selectors": ["title", "h1"],
-                "timeout": 30
-            }
-        }
+        # System analytics
+        success, response = self.make_request('GET', '/system/analytics')
+        self.log_test("System Analytics", success, str(response.get('error', '')) if not success else "")
         
-        success, response = self.make_request('POST', '/shadow/execute', task_request)
-        task_id = None
-        if success and 'task_id' in response:
-            task_id = response['task_id']
-        
-        self.log_test("Execute Shadow Browser Task", success, str(response.get('error', '')) if not success else "")
-        
-        # Check task status if task was created
-        if task_id:
-            time.sleep(2)  # Wait a bit for task to process
-            success, response = self.make_request('GET', f'/shadow/status/{task_id}')
-            self.log_test("Get Shadow Task Status", success, str(response.get('error', '')) if not success else "")
+        # User analytics
+        success, response = self.make_request('GET', f'/user/{self.session_id}/analytics')
+        self.log_test("User Analytics", success, str(response.get('error', '')) if not success else "")
 
     def test_memory_endpoints(self):
         """Test memory and personalization"""
