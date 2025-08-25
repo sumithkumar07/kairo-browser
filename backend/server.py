@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 import os
+from playwright.async_api import async_playwright
 import asyncio
 import json
 import uuid
