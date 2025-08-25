@@ -167,37 +167,27 @@ class UltimateKairoAPITester:
         success, response = self.make_request('POST', '/interaction/execute', interaction_request)
         self.log_test("Real Interaction - Type", success, str(response.get('error', '')) if not success else "")
 
-    def test_accessibility_endpoints(self):
-        """Test accessibility features"""
-        print("\n♿ Testing Accessibility Endpoints...")
+    def test_advanced_rendering_system(self):
+        """Test advanced rendering system"""
+        print("\n🎨 Testing Advanced Rendering System...")
         
-        # Text-to-speech
-        tts_request = {
-            "text": "Hello, this is a test of the text-to-speech functionality.",
-            "options": {"voice": "default", "speed": 1.0}
+        # Enhanced rendering
+        rendering_request = {
+            "url": "https://httpbin.org/get",
+            "rendering_profile": "balanced",
+            "optimization_level": 3,
+            "session_id": self.session_id
         }
         
-        success, response = self.make_request('POST', '/accessibility/tts', tts_request)
-        self.log_test("Text-to-Speech", success, str(response.get('error', '')) if not success else "")
+        success, response = self.make_request('POST', '/rendering/enhanced', rendering_request, timeout=60)
+        self.log_test("Advanced Rendering - Balanced Profile", success, str(response.get('error', '')) if not success else "")
         
-        # Translation
-        translate_request = {
-            "text": "Hello world",
-            "target_language": "es",
-            "source_language": "en"
-        }
+        # Performance optimized rendering
+        rendering_request["rendering_profile"] = "performance_optimized"
+        rendering_request["optimization_level"] = 5
         
-        success, response = self.make_request('POST', '/accessibility/translate', translate_request)
-        self.log_test("Text Translation", success, str(response.get('error', '')) if not success else "")
-        
-        # Reading assistance
-        reading_request = {
-            "text": "This is a complex sentence that needs to be simplified for better readability.",
-            "reading_level": "simple"
-        }
-        
-        success, response = self.make_request('POST', '/accessibility/reading', reading_request)
-        self.log_test("Reading Assistance", success, str(response.get('error', '')) if not success else "")
+        success, response = self.make_request('POST', '/rendering/enhanced', rendering_request, timeout=60)
+        self.log_test("Advanced Rendering - Performance Optimized", success, str(response.get('error', '')) if not success else "")
 
     def test_shadow_browser_endpoints(self):
         """Test shadow browser capabilities"""
