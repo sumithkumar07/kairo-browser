@@ -34,25 +34,42 @@ class UltraProxyService:
         ]
     
     async def route_request(self, url: str, method: str = "GET", headers: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
-        """Smart routing based on site characteristics"""
+        """Ultra-smart routing with multiple fallback strategies"""
         try:
-            logger.info(f"🔍 Routing request for: {url}")
+            logger.info(f"🔍 Ultra-routing request for: {url}")
             
-            # Determine best proxy method
-            if self._requires_browser_engine(url):
-                logger.info("📱 Using enhanced browser engine for JavaScript-heavy site")
-                return await self.browser_proxy(url, headers)
-            else:
-                logger.info("🌐 Using enhanced HTTP proxy for regular site")
+            # Multi-layer approach for maximum success
+            strategies = [
+                ("ultra_stealth_browser", "🥷 Ultra-stealth browser engine"),
+                ("rotating_http_proxy", "🔄 Rotating HTTP proxy with random delays"),
+                ("enhanced_browser_fallback", "📱 Enhanced browser fallback"),
+                ("basic_http_fallback", "🌐 Basic HTTP fallback")
+            ]
+            
+            for strategy, description in strategies:
                 try:
-                    return await self.enhanced_http_proxy(url, headers)
-                except Exception as http_error:
-                    logger.warning(f"HTTP proxy failed, falling back to browser engine: {http_error}")
-                    return await self.browser_proxy(url, headers)
+                    logger.info(f"{description} for: {url}")
+                    
+                    if strategy == "ultra_stealth_browser":
+                        return await self.ultra_stealth_browser_proxy(url, headers)
+                    elif strategy == "rotating_http_proxy":
+                        return await self.rotating_http_proxy(url, headers)
+                    elif strategy == "enhanced_browser_fallback":
+                        return await self.browser_proxy(url, headers)
+                    else:  # basic_http_fallback
+                        return await self.enhanced_http_proxy(url, headers)
+                        
+                except Exception as strategy_error:
+                    logger.warning(f"Strategy {strategy} failed: {strategy_error}")
+                    continue
+                    
+            # If all strategies fail
+            logger.error(f"❌ All proxy strategies failed for {url}")
+            return await self._advanced_fallback_response(url, "All access methods exhausted")
                     
         except Exception as e:
-            logger.error(f"❌ All proxy methods failed for {url}: {e}")
-            return await self._fallback_response(url, str(e))
+            logger.error(f"❌ Critical routing failure for {url}: {e}")
+            return await self._advanced_fallback_response(url, str(e))
     
     def _requires_browser_engine(self, url: str) -> bool:
         """Check if site requires browser engine"""
