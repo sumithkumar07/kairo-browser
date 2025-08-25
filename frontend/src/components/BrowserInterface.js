@@ -269,10 +269,23 @@ const BrowserInterface = ({ onBackToWelcome }) => {
       {/* Browser Content */}
       <main className="flex-1 relative bg-white">
         {iframeContent ? (
-          <div 
-            className="w-full h-full"
-            dangerouslySetInnerHTML={{ __html: iframeContent }}
-          />
+          <div className="w-full h-full relative">
+            <div 
+              className="w-full h-full"
+              dangerouslySetInnerHTML={{ __html: iframeContent }}
+            />
+            {/* Fallback iframe for sites that still block embedding */}
+            {!iframeContent.includes('<html') && (
+              <iframe 
+                src={currentUrl}
+                className="absolute inset-0 w-full h-full border-none"
+                title="Website Content"
+                sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-top-navigation"
+                onLoad={() => console.log('Iframe loaded successfully')}
+                onError={() => console.log('Iframe failed to load')}
+              />
+            )}
+          </div>
         ) : (
           <div className="flex items-center justify-center h-full bg-gray-50">
             <div className="text-center">
