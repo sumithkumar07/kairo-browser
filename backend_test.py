@@ -53,17 +53,17 @@ class UltimateKairoAPITester:
         except Exception as e:
             return False, {"error": str(e)}
 
-    def test_basic_endpoints(self):
-        """Test basic system endpoints"""
-        print("\n🔍 Testing Basic System Endpoints...")
+    def test_health_endpoints(self):
+        """Test health check endpoints"""
+        print("\n🏥 Testing Health Check Endpoints...")
         
-        # Health check
+        # Basic health check
         success, response = self.make_request('GET', '/health')
-        self.log_test("Health Check", success, str(response.get('error', '')) if not success else "")
+        self.log_test("Basic Health Check", success, str(response.get('error', '')) if not success else "")
         
-        # Root endpoint
-        success, response = self.make_request('GET', '')
-        self.log_test("Root Endpoint", success, str(response.get('error', '')) if not success else "")
+        # Ultimate health check
+        success, response = self.make_request('GET', '/system/health-ultimate')
+        self.log_test("Ultimate Health Check", success, str(response.get('error', '')) if not success else "")
         
         # Enhanced system status
         success, response = self.make_request('GET', '/system/status')
