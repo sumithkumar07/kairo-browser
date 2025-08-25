@@ -28,7 +28,6 @@ import {
   Wifi,
   WifiOff,
   MessageSquare,
-  Workflow,
   MousePointer,
   Play,
   Save,
@@ -38,7 +37,6 @@ import {
   RotateCw
 } from 'lucide-react';
 import { useSession } from '../contexts/SessionContext';
-import VisualWorkflowBuilder from './VisualWorkflowBuilder';
 
 const EnhancedBrowserInterface = ({ onBackToWelcome }) => {
   const {
