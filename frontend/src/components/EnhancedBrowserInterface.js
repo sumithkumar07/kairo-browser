@@ -477,6 +477,161 @@ const EnhancedBrowserInterface = ({ onBackToWelcome }) => {
     }
   };
 
+  // Advanced workflow building functions
+  const isWorkflowBuildingCommand = (message) => {
+    const workflowKeywords = [
+      'create workflow', 'build workflow', 'make workflow',
+      'create automation', 'build automation', 'automate',
+      'create routine', 'build routine', 'daily routine',
+      'create task', 'schedule task', 'recurring task',
+      'create sequence', 'build sequence',
+      'save command', 'save as command', 'custom command',
+      'create macro', 'build macro'
+    ];
+    
+    return workflowKeywords.some(keyword => 
+      message.toLowerCase().includes(keyword)
+    );
+  };
+
+  const handleWorkflowBuilding = async (message) => {
+    addChatMessage('ai', '🔨 Building your custom workflow...');
+    
+    try {
+      // Enhanced AI processing for workflow building
+      const aiResponse = await processAIQuery(message, {
+        currentUrl: currentUrl,
+        sessionId: sessionId,
+        workflowBuildingContext: true,
+        existingWorkflows: builtWorkflows,
+        userPatterns: chatMessages.filter(msg => msg.type === 'user').slice(-5)
+      });
+
+      if (aiResponse.workflow) {
+        const workflow = aiResponse.workflow;
+        
+        // Add to built workflows
+        const workflowId = `wf_${Date.now()}`;
+        const newWorkflow = {
+          id: workflowId,
+          name: workflow.name,
+          description: workflow.description,
+          steps: workflow.steps,
+          schedule: workflow.schedule,
+          triggers: workflow.triggers || ['manual'],
+          created: new Date(),
+          createdBy: 'conversation',
+          status: 'ready'
+        };
+        
+        setBuiltWorkflows(prev => [...prev, newWorkflow]);
+        
+        let workflowSummary = `✅ **Workflow Created: "${workflow.name}"**\n\n`;
+        workflowSummary += `📝 **Description:** ${workflow.description}\n`;
+        workflowSummary += `🏗️ **Steps:** ${workflow.steps.length} actions\n`;
+        
+        if (workflow.schedule) {
+          workflowSummary += `⏰ **Schedule:** ${workflow.schedule}\n`;
+        }
+        
+        workflowSummary += `🎯 **Triggers:** ${workflow.triggers?.join(', ') || 'Manual'}\n\n`;
+        
+        // Show preview of steps
+        workflowSummary += `**Workflow Steps:**\n`;
+        workflow.steps.slice(0, 3).forEach((step, i) => {
+          workflowSummary += `${i + 1}. ${step.description || step.type}\n`;
+        });
+        
+        if (workflow.steps.length > 3) {
+          workflowSummary += `... and ${workflow.steps.length - 3} more steps\n`;
+        }
+        
+        workflowSummary += `\n💡 **Execute:** Say "Run ${workflow.name}" or use the Builder tab\n`;
+        
+        if (aiResponse.builder_suggestions) {
+          workflowSummary += `\n🔧 **Suggestions:** ${aiResponse.builder_suggestions.join(', ')}`;
+        }
+        
+        addChatMessage('ai', workflowSummary, { 
+          workflow: newWorkflow,
+          type: 'workflow_created'
+        });
+        
+      } else {
+        // AI asking clarifying questions
+        addChatMessage('ai', aiResponse.explanation || 'Could you provide more details about the workflow you want to create?');
+      }
+      
+    } catch (error) {
+      addChatMessage('ai', `❌ Workflow building error: ${error.message}`);
+    }
+  };
+
+  const handleWorkflowCreationResponse = async (aiResponse) => {
+    if (aiResponse.workflow) {
+      const workflow = aiResponse.workflow;
+      
+      // Create and store workflow
+      const workflowId = `wf_${Date.now()}`;
+      const newWorkflow = {
+        id: workflowId,
+        name: workflow.name,
+        description: workflow.description,
+        steps: workflow.steps,
+        schedule: workflow.schedule,
+        triggers: workflow.triggers || ['manual'],
+        notifications: workflow.notifications || [],
+        created: new Date(),
+        createdBy: 'ai_conversation',
+        status: 'ready'
+      };
+      
+      setBuiltWorkflows(prev => [...prev, newWorkflow]);
+      
+      // Display comprehensive workflow summary
+      let summary = `🎉 **Workflow Successfully Built!**\n\n`;
+      summary += `📋 **Name:** ${workflow.name}\n`;
+      summary += `📝 **Description:** ${workflow.description}\n`;
+      summary += `🔧 **Steps:** ${workflow.steps.length} automated actions\n`;
+      
+      if (workflow.schedule) {
+        summary += `⏰ **Schedule:** ${workflow.schedule}\n`;
+      }
+      
+      summary += `🎯 **Triggers:** ${workflow.triggers.join(', ')}\n`;
+      
+      if (workflow.notifications.length > 0) {
+        summary += `🔔 **Notifications:** ${workflow.notifications.join(', ')}\n`;
+      }
+      
+      summary += `\n**Workflow Preview:**\n`;
+      workflow.steps.forEach((step, i) => {
+        summary += `${i + 1}. ${step.description || `${step.type} action`}\n`;
+        if (step.conditions) {
+          summary += `   ↳ Condition: ${step.conditions}\n`;
+        }
+      });
+      
+      summary += `\n✨ **How to Use:**\n`;
+      summary += `• Say "Run ${workflow.name}" to execute\n`;
+      summary += `• View in Builder tab for visual editing\n`;
+      summary += `• Workflows are saved to your session\n`;
+      
+      if (aiResponse.builder_suggestions) {
+        summary += `\n💡 **Enhancement Ideas:**\n`;
+        aiResponse.builder_suggestions.forEach(suggestion => {
+          summary += `• ${suggestion}\n`;
+        });
+      }
+      
+      addChatMessage('ai', summary, { 
+        workflow: newWorkflow,
+        type: 'workflow_built',
+        actions: ['execute', 'edit', 'duplicate', 'schedule']
+      });
+    }
+  };
+
   // Handle workflow execution from visual builder
   const handleWorkflowExecution = async (workflow) => {
     addChatMessage('ai', `🔄 Executing workflow: ${workflow.name || 'Custom Workflow'}`);
