@@ -385,74 +385,253 @@ async def get_active_sessions():
 
 @app.post("/api/proxy/browser")
 async def proxy_with_browser(request_data: Dict[str, Any]):
-    """Advanced proxy using headless browser for JavaScript-heavy sites like YouTube"""
+    """Advanced proxy using headless browser for JavaScript-heavy sites with enhanced anti-detection"""
     try:
         url = request_data.get("url")
         if not url:
             raise HTTPException(status_code=400, detail="URL required")
         
         async with async_playwright() as p:
-            # Launch browser in headless mode
-            browser = await p.chromium.launch(headless=True)
-            context = await browser.new_context(
-                viewport={'width': 1280, 'height': 720},
-                user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            # Launch browser with enhanced stealth configuration
+            browser = await p.chromium.launch(
+                headless=True,
+                args=[
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--disable-accelerated-2d-canvas',
+                    '--no-first-run',
+                    '--no-zygote',
+                    '--disable-gpu',
+                    '--disable-background-timer-throttling',
+                    '--disable-backgrounding-occluded-windows',
+                    '--disable-renderer-backgrounding',
+                    '--disable-features=TranslateUI',
+                    '--disable-ipc-flooding-protection',
+                    '--disable-blink-features=AutomationControlled'
+                ]
             )
+            
+            # Enhanced browser context with real browser fingerprint
+            context = await browser.new_context(
+                viewport={'width': 1920, 'height': 1080},
+                user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                locale='en-US',
+                timezone_id='America/New_York',
+                permissions=['geolocation'],
+                extra_http_headers={
+                    'Accept-Language': 'en-US,en;q=0.9',
+                    'Accept-Encoding': 'gzip, deflate, br',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache',
+                    'Sec-Fetch-Dest': 'document',
+                    'Sec-Fetch-Mode': 'navigate',
+                    'Sec-Fetch-Site': 'none',
+                    'Sec-Fetch-User': '?1',
+                    'Upgrade-Insecure-Requests': '1'
+                }
+            )
+            
+            # Add script to override webdriver detection
+            await context.add_init_script("""
+                Object.defineProperty(navigator, 'webdriver', {
+                    get: () => undefined,
+                });
+                
+                window.chrome = {
+                    runtime: {},
+                };
+                
+                Object.defineProperty(navigator, 'languages', {
+                    get: () => ['en-US', 'en'],
+                });
+                
+                Object.defineProperty(navigator, 'plugins', {
+                    get: () => [1, 2, 3, 4, 5],
+                });
+                
+                // Remove automation indicators
+                delete navigator.__proto__.webdriver;
+            """)
             
             page = await context.new_page()
             
-            # Navigate to the URL
-            await page.goto(url, wait_until='networkidle', timeout=30000)
+            # Navigate with enhanced options
+            try:
+                await page.goto(url, wait_until='networkidle', timeout=45000)
+                
+                # Wait for dynamic content to load
+                await page.wait_for_timeout(5000)
+                
+                # Try to wait for main content containers
+                try:
+                    await page.wait_for_selector('body', timeout=10000)
+                except:
+                    pass
+                
+            except Exception as nav_error:
+                logger.warning(f"Navigation warning for {url}: {str(nav_error)}")
+                # Continue with whatever content was loaded
             
-            # Wait for content to load
-            await page.wait_for_timeout(3000)
-            
-            # Get the page content
+            # Get the fully rendered page content
             content = await page.content()
             
-            # Parse with BeautifulSoup
+            # Parse and enhance HTML
             soup = BeautifulSoup(content, 'html.parser')
             
-            # Remove frame-busting scripts
+            # Enhanced frame-busting script removal
+            scripts_to_remove = []
             for script in soup.find_all('script'):
                 script_content = script.string or ''
-                if any(keyword in script_content for keyword in ['top.location', 'frameElement', 'self !== top']):
-                    script.decompose()
+                script_src = script.get('src', '')
+                
+                # Remove various anti-iframe and detection scripts
+                removal_keywords = [
+                    'top.location', 'frameElement', 'self !== top', 'parent.frames',
+                    'window.top', 'top != self', 'parent != window', 'top != window',
+                    'self != top', 'frameElement != null', 'window.frameElement',
+                    'document.referrer', 'window.parent', 'top.document',
+                    'webdriver', 'automation', 'headless'
+                ]
+                
+                if any(keyword in script_content.lower() for keyword in removal_keywords):
+                    scripts_to_remove.append(script)
+                elif 'analytics' in script_src or 'tracking' in script_src:
+                    scripts_to_remove.append(script)
             
-            # Add base tag
-            base_tag = soup.new_tag("base", href=url)
+            # Remove problematic scripts
+            for script in scripts_to_remove:
+                script.decompose()
+            
+            # Remove/modify problematic meta tags
+            meta_tags_to_remove = []
+            for meta in soup.find_all('meta'):
+                http_equiv = meta.get('http-equiv', '').lower()
+                name = meta.get('name', '').lower()
+                
+                if http_equiv in ['x-frame-options', 'content-security-policy']:
+                    meta_tags_to_remove.append(meta)
+                elif name in ['referrer'] and 'no-referrer' in meta.get('content', ''):
+                    meta['content'] = 'unsafe-url'
+            
+            for meta in meta_tags_to_remove:
+                meta.decompose()
+            
+            # Add enhanced base tag and meta tags
             if soup.head:
+                # Base tag for relative URLs
+                base_tag = soup.new_tag("base", href=url)
                 soup.head.insert(0, base_tag)
+                
+                # Override CSP
+                csp_meta = soup.new_tag("meta")
+                csp_meta.attrs['http-equiv'] = 'Content-Security-Policy'
+                csp_meta.attrs['content'] = "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; frame-ancestors *;"
+                soup.head.append(csp_meta)
+                
+                # Ensure viewport
+                viewport_meta = soup.new_tag("meta", name="viewport", content="width=device-width, initial-scale=1.0")
+                soup.head.append(viewport_meta)
             
-            # Add styles to make content fit properly
+            # Enhanced CSS injection
             style_tag = soup.new_tag("style")
             style_tag.string = """
+                /* Enhanced iframe compatibility styles */
                 body { 
                     margin: 0 !important; 
                     padding: 0 !important; 
                     overflow-x: auto !important;
                     min-height: 100vh !important;
+                    width: 100% !important;
                 }
-                * { box-sizing: border-box !important; }
-                iframe { max-width: 100% !important; }
+                
+                * { 
+                    box-sizing: border-box !important; 
+                }
+                
+                iframe, embed, object { 
+                    max-width: 100% !important; 
+                    height: auto !important; 
+                }
+                
+                /* Fix common layout issues */
+                .header, .navigation, nav, header { 
+                    position: relative !important; 
+                }
+                
+                /* Ensure content is visible */
+                [style*="display: none"], [style*="visibility: hidden"] {
+                    display: block !important;
+                    visibility: visible !important;
+                }
+                
+                /* Override fixed positioning that might break iframe */
+                .fixed, [style*="position: fixed"] {
+                    position: relative !important;
+                }
             """
             if soup.head:
                 soup.head.append(style_tag)
+            elif soup.body:
+                soup.body.insert(0, style_tag)
+            
+            # Add JavaScript to enhance compatibility
+            js_tag = soup.new_tag("script")
+            js_tag.string = """
+                // Enhanced iframe compatibility JavaScript
+                (function() {
+                    'use strict';
+                    
+                    // Override common frame-busting attempts
+                    try {
+                        if (window.top !== window.self) {
+                            window.top = window.self;
+                        }
+                        if (window.parent !== window.self) {
+                            window.parent = window.self;
+                        }
+                        
+                        // Override frame detection
+                        Object.defineProperty(window, 'frameElement', {
+                            get: function() { return null; },
+                            configurable: true
+                        });
+                        
+                        // Prevent redirect attempts
+                        var originalReplace = window.location.replace;
+                        window.location.replace = function(url) {
+                            console.log('Blocked redirect attempt to:', url);
+                        };
+                        
+                        var originalAssign = window.location.assign;
+                        window.location.assign = function(url) {
+                            console.log('Blocked navigation attempt to:', url);
+                        };
+                        
+                    } catch (e) {
+                        console.log('Frame compatibility script error:', e);
+                    }
+                })();
+            """
+            if soup.body:
+                soup.body.append(js_tag)
             
             await browser.close()
             
             return {
                 "content": str(soup),
                 "status_code": 200,
-                "headers": {"Content-Type": "text/html"},
+                "headers": {"Content-Type": "text/html; charset=utf-8"},
                 "url": url,
-                "method": "browser_rendered",
-                "iframe_safe": True
+                "method": "enhanced_browser_rendered",
+                "iframe_safe": True,
+                "anti_detection": True
             }
             
     except Exception as e:
-        logger.error(f"Error with browser proxy: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Browser proxy error: {str(e)}")
+        logger.error(f"Error with enhanced browser proxy: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Enhanced browser proxy error: {str(e)}")
 
 @app.post("/api/proxy/enhanced")
 async def enhanced_proxy_request(request_data: Dict[str, Any]):
