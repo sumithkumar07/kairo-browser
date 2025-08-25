@@ -110,7 +110,7 @@ const WelcomePage = ({ onStartBrowsing }) => {
           </h1>
           
           <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Your AI Assistant with Native Browser Engine
+            Your Enhanced AI Assistant with Advanced Browser Engine
           </p>
           
           <motion.div
