@@ -222,21 +222,16 @@ class UltimateKairoAPITester:
         else:
             self.log_test("Image Analysis Endpoint Available", success, str(response.get('error', '')) if not success else "")
 
-    def test_intelligence_endpoints(self):
-        """Test intelligence analysis"""
-        print("\n🧠 Testing Intelligence Endpoints...")
+    def test_stealth_capabilities(self):
+        """Test stealth testing capabilities"""
+        print("\n🥷 Testing Stealth Capabilities...")
         
-        intelligence_request = {
-            "user_id": "test_user_123",
-            "context": {
-                "current_page": "https://example.com",
-                "user_activity": "research",
-                "time_of_day": "afternoon"
-            }
-        }
+        # Test stealth against different domains
+        test_domains = ["httpbin.org", "example.com"]
         
-        success, response = self.make_request('POST', '/intelligence/analyze', intelligence_request)
-        self.log_test("Intelligence Analysis", success, str(response.get('error', '')) if not success else "")
+        for domain in test_domains:
+            success, response = self.make_request('GET', f'/stealth/test/{domain}', timeout=45)
+            self.log_test(f"Stealth Test - {domain}", success, str(response.get('error', '')) if not success else "")
 
     def test_workspace_endpoints(self):
         """Test workspace management"""
