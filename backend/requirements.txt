@@ -8,3 +8,4 @@ httpx==0.25.2
 beautifulsoup4==4.12.2
 groq==0.4.1
 playwright==1.54.0
+pyee>=8.0.0
