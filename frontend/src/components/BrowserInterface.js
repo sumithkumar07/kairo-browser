@@ -51,6 +51,40 @@ const BrowserInterface = ({ onBackToWelcome }) => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
 
+  // Listen for navigation messages from iframe content
+  useEffect(() => {
+    const handleMessage = async (event) => {
+      // Only handle messages from our iframe content
+      if (event.data && event.data.type === 'NAVIGATE_TO') {
+        const newUrl = event.data.url;
+        console.log('Received navigation request from iframe:', newUrl);
+        
+        try {
+          // Navigate using our browser system
+          await navigateToUrl(newUrl);
+          
+          // Load content via enhanced proxy system
+          const response = await proxyRequest(newUrl);
+          if (response && response.content) {
+            console.log(`Navigation completed using ${response.method} for ${newUrl}`);
+            setIframeContent(response.content);
+          }
+        } catch (error) {
+          console.error('Navigation failed:', error);
+          addChatMessage('ai', `Navigation to ${newUrl} failed. Please try again.`);
+        }
+      }
+    };
+
+    // Add message listener
+    window.addEventListener('message', handleMessage);
+    
+    // Cleanup
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
+  }, [navigateToUrl, proxyRequest]);
+
   const handleUrlSubmit = async (e) => {
     e.preventDefault();
     if (!urlInput.trim()) return;
