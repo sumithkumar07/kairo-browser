@@ -184,7 +184,7 @@ class MilitaryGradeStealthEngine:
     
     def _generate_architecture(self) -> str:
         """Generate realistic architecture"""
-        return random.choice(['"x86"', '"arm"', '""])
+        return random.choice(['"x86"', '"arm"', '""'])
     
     def _generate_full_version_list(self, user_agent: str) -> str:
         """Generate realistic full version list"""
