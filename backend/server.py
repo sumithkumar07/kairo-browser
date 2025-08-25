@@ -1135,6 +1135,128 @@ async def enhanced_http_proxy(request_data: Dict[str, Any]):
         logger.error(f"Error with enhanced HTTP proxy: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Enhanced HTTP proxy error: {str(e)}")
 
+@app.post("/api/navigate")
+async def navigate_to_url(request_data: Dict[str, Any]):
+    """Navigate to a URL using enhanced proxy system"""
+    url = request_data.get("url")
+    session_id = request_data.get("session_id", str(uuid.uuid4()))
+    
+    if not url:
+        raise HTTPException(status_code=400, detail="URL required")
+    
+    try:
+        # Normalize URL
+        if not url.startswith(('http://', 'https://')):
+            url = 'https://' + url
+        
+        # Execute browser command for navigation
+        command_result = {
+            "session_id": session_id,
+            "command": "navigate",
+            "url": url,
+            "status": "executed",
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        # Store navigation command
+        db.browser_commands.insert_one({
+            "session_id": session_id,
+            "command": {
+                "command": "navigate",
+                "url": url
+            },
+            "result": command_result,
+            "timestamp": datetime.now()
+        })
+        
+        # Use enhanced proxy system to load content
+        try:
+            # First try enhanced proxy with smart routing
+            proxy_response = await enhanced_proxy_request({"url": url})
+            command_result["proxy_method"] = proxy_response.get("method", "enhanced_proxy")
+            command_result["content"] = proxy_response.get("content", "")
+        except Exception as proxy_error:
+            logger.warning(f"Enhanced proxy failed for {url}: {proxy_error}")
+            # Fallback to basic proxy
+            try:
+                basic_proxy_response = await proxy_request_internal({"url": url})
+                command_result["proxy_method"] = "basic_proxy"
+                command_result["content"] = basic_proxy_response.get("content", "")
+            except Exception as basic_error:
+                logger.error(f"All proxy methods failed for {url}: {basic_error}")
+                raise HTTPException(status_code=500, detail=f"Unable to load content from {url}")
+        
+        return command_result
+        
+    except Exception as e:
+        logger.error(f"Navigation error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Navigation failed: {str(e)}")
+
+async def enhanced_proxy_request(request_data: Dict[str, Any]):
+    """Internal enhanced proxy request"""
+    return await enhanced_proxy_request_handler(request_data)
+
+async def proxy_request_internal(request_data: Dict[str, Any]):
+    """Internal basic proxy request"""
+    url = request_data.get("url")
+    if not url:
+        raise HTTPException(status_code=400, detail="URL required")
+    
+    try:
+        custom_headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept-Encoding': 'gzip, deflate',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+        }
+        
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.get(url, headers=custom_headers, follow_redirects=True)
+            
+            # Parse and clean HTML
+            soup = BeautifulSoup(response.text, 'html.parser')
+            
+            # Remove blocking meta tags
+            for meta in soup.find_all('meta'):
+                if meta.get('http-equiv') == 'X-Frame-Options':
+                    meta.decompose()
+                elif meta.get('http-equiv') == 'Content-Security-Policy':
+                    meta.decompose()
+            
+            # Add base tag for relative URLs
+            base_tag = soup.new_tag("base", href=url)
+            if soup.head:
+                soup.head.insert(0, base_tag)
+            
+            # Clean headers
+            clean_headers = dict(response.headers)
+            headers_to_remove = [
+                'x-frame-options', 'X-Frame-Options',
+                'content-security-policy', 'Content-Security-Policy',
+                'x-content-type-options', 'X-Content-Type-Options'
+            ]
+            
+            for header in headers_to_remove:
+                clean_headers.pop(header, None)
+            
+            return {
+                "content": str(soup),
+                "status_code": response.status_code,
+                "headers": clean_headers,
+                "url": str(response.url),
+                "method": "basic_proxy"
+            }
+            
+    except Exception as e:
+        logger.error(f"Basic proxy error: {str(e)}")
+        raise e
+
+async def enhanced_proxy_request_handler(request_data: Dict[str, Any]):
+    """Enhanced proxy request handler"""
+    return await enhanced_proxy_request(request_data)
+
 @app.post("/api/proxy")
 async def proxy_request(request_data: Dict[str, Any]):
     """Proxy requests to external websites with header manipulation to bypass iframe restrictions"""
