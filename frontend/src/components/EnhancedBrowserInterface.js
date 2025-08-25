@@ -211,6 +211,12 @@ const EnhancedBrowserInterface = ({ onBackToWelcome }) => {
         }
       }
 
+      // Check for workflow building commands
+      if (isWorkflowBuildingCommand(userMessage)) {
+        await handleWorkflowBuilding(userMessage);
+        return;
+      }
+
       // Standard AI processing with enhanced context
       const aiResponse = await processAIQuery(userMessage, {
         currentUrl: currentUrl,
