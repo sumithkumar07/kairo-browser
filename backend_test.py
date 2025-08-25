@@ -143,17 +143,29 @@ class UltimateKairoAPITester:
         success, response = self.make_request('POST', '/proxy', proxy_request)
         self.log_test("Basic HTTP Proxy", success, str(response.get('error', '')) if not success else "")
 
-    def test_report_generation_endpoints(self):
-        """Test report generation capabilities"""
-        print("\n📊 Testing Report Generation Endpoints...")
+    def test_real_interaction_engine(self):
+        """Test real interaction engine capabilities"""
+        print("\n🎯 Testing Real Interaction Engine...")
         
-        report_request = {
-            "type": "analytics",
-            "config": {"data_source": "web_activity", "period": "week", "async": False}
+        # Test click interaction
+        interaction_request = {
+            "url": "https://httpbin.org/get",
+            "interaction_type": "click",
+            "interaction_params": {"selector": "body", "coordinates": [100, 100]},
+            "behavior_type": "professional",
+            "session_id": self.session_id,
+            "stealth_level": 5
         }
         
-        success, response = self.make_request('POST', '/reports/generate', report_request, timeout=60)
-        self.log_test("Generate Analytics Report", success, str(response.get('error', '')) if not success else "")
+        success, response = self.make_request('POST', '/interaction/execute', interaction_request)
+        self.log_test("Real Interaction - Click", success, str(response.get('error', '')) if not success else "")
+        
+        # Test type interaction
+        interaction_request["interaction_type"] = "type"
+        interaction_request["interaction_params"] = {"selector": "input", "text": "test input"}
+        
+        success, response = self.make_request('POST', '/interaction/execute', interaction_request)
+        self.log_test("Real Interaction - Type", success, str(response.get('error', '')) if not success else "")
 
     def test_accessibility_endpoints(self):
         """Test accessibility features"""
