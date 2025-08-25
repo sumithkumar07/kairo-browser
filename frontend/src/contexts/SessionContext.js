@@ -127,19 +127,33 @@ export const SessionProvider = ({ children }) => {
     }
   };
 
-  // Proxy request for loading external content
+  // Enhanced proxy request for loading external content with smart routing
   const proxyRequest = async (url) => {
     try {
-      // For YouTube and other complex sites, use enhanced proxy
-      const isYouTube = url.includes('youtube.com');
-      
-      const proxyEndpoint = isYouTube ? `${API_BASE}/api/proxy/enhanced` : `${API_BASE}/api/proxy`;
-      
-      const response = await axios.post(proxyEndpoint, { url });
+      // Always use enhanced proxy with smart routing
+      const response = await axios.post(`${API_BASE}/api/proxy/enhanced`, { url });
       return response.data;
     } catch (error) {
-      console.error('Proxy request error:', error);
-      throw error;
+      console.error('Enhanced proxy request error:', error);
+      
+      // Fallback to browser proxy if enhanced fails
+      try {
+        console.log('Falling back to browser proxy...');
+        const fallbackResponse = await axios.post(`${API_BASE}/api/proxy/browser`, { url });
+        return fallbackResponse.data;
+      } catch (fallbackError) {
+        console.error('Browser proxy fallback also failed:', fallbackError);
+        
+        // Final fallback to basic proxy
+        try {
+          console.log('Final fallback to basic proxy...');
+          const basicResponse = await axios.post(`${API_BASE}/api/proxy`, { url });
+          return basicResponse.data;
+        } catch (basicError) {
+          console.error('All proxy methods failed:', basicError);
+          throw error; // Throw original error
+        }
+      }
     }
   };
 
