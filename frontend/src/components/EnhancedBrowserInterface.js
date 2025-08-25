@@ -1140,12 +1140,12 @@ const EnhancedBrowserInterface = ({ onBackToWelcome }) => {
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                      {chatMode === 'chat' ? <Bot className="w-5 h-5" /> : <Workflow className="w-5 h-5" />}
+                      <Bot className="w-5 h-5" />
                     </div>
                     <div>
                       <h3 className="font-semibold">Kairo AI Assistant</h3>
                       <p className="text-xs text-green-100">
-                        {chatMode === 'chat' ? 'Enhanced • All Fellou features' : 'Visual Builder • Drag & Drop'}
+                        Enhanced • Conversational Workflow Builder
                       </p>
                     </div>
                   </div>
