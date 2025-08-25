@@ -52,7 +52,6 @@ const EnhancedBrowserInterface = ({ onBackToWelcome }) => {
   // Enhanced state management
   const [urlInput, setUrlInput] = useState('');
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [chatMode, setChatMode] = useState('chat'); // 'chat' | 'builder'
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
