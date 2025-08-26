@@ -179,23 +179,35 @@ class BrowserAutomation {
   }
 
   async searchOnPage(page, query) {
-    // Try common search selectors
+    // Try common search selectors including Google's specific ones
     const searchSelectors = [
+      'input[name="q"]',           // Google search
+      'textarea[name="q"]',        // Google's new search box
       'input[name="search"]',
-      'input[name="q"]',
       'input[placeholder*="search" i]',
       'input[placeholder*="Search" i]',
       '#search',
       '.search-input',
-      '[role="searchbox"]'
+      '[role="searchbox"]',
+      '[role="combobox"]'
     ];
 
     for (const selector of searchSelectors) {
       try {
+        // Wait for element to be present
+        await page.waitForSelector(selector, { timeout: 3000 });
         const element = await page.$(selector);
+        
         if (element) {
+          // Clear any existing text and type the query
+          await element.click();
+          await element.fill('');
           await element.fill(query);
+          await page.waitForTimeout(500); // Brief pause for stability
           await element.press('Enter');
+          
+          // Wait for search results to start loading
+          await page.waitForTimeout(2000);
           
           return {
             action: 'searched',
