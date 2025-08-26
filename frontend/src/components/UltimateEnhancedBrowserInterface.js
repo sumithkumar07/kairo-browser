@@ -130,7 +130,8 @@ const UltimateEnhancedBrowserInterface = ({ onBackToWelcome }) => {
 
       const result = await response.json();
 
-      if (result.success && result.content) {
+      // Handle both success response formats
+      if ((result.success && result.content) || result.content) {
         setIframeContent(result.content);
         updateCurrentTab({ 
           url: url, 
@@ -141,10 +142,10 @@ const UltimateEnhancedBrowserInterface = ({ onBackToWelcome }) => {
 
         // Update performance metrics
         setPerformanceMetrics({
-          request_time: result.request_time_ms || 0,
-          method_used: result.method_used || 'unknown',
+          request_time: result.request_time_ms || result.request_time || 0,
+          method_used: result.method_used || result.method || 'unknown',
           tier_used: result.tier_used || 'unknown',
-          success_rate: result.success ? 100 : 0,
+          success_rate: (result.success !== false) ? 100 : 0,
           stealth_level: userPreferences.stealth_level
         });
 
@@ -155,7 +156,80 @@ const UltimateEnhancedBrowserInterface = ({ onBackToWelcome }) => {
       }
     } catch (error) {
       console.error('Ultimate navigation error:', error);
-      setIframeContent(`<html><body><h1>Navigation Error</h1><p>${error.message}</p></body></html>`);
+      setIframeContent(`<html><body><div style="padding: 20px; text-align: center;"><h1>🔄 Loading Content...</h1><p>Attempting to load: ${url}</p><p style="color: #666;">Enhanced proxy processing...</p></div></body></html>`);
+      
+      // Try fallback methods
+      try {
+        const backendUrl = process.env.REACT_APP_BACKEND_URL || window.location.origin;
+        
+        // Try enhanced proxy first
+        const enhancedResponse = await fetch(`${backendUrl}/api/proxy/enhanced`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: url })
+        });
+        
+        const enhancedResult = await enhancedResponse.json();
+        
+        if (enhancedResult.content) {
+          setIframeContent(enhancedResult.content);
+          updateCurrentTab({ 
+            url: url, 
+            title: getDomainFromUrl(url),
+            loading: false,
+            favicon: getFaviconForUrl(url)
+          });
+          
+          setPerformanceMetrics({
+            request_time: 0,
+            method_used: enhancedResult.method || 'enhanced_proxy',
+            tier_used: 'fallback_enhanced',
+            success_rate: 100,
+            stealth_level: userPreferences.stealth_level
+          });
+          
+          return;
+        }
+      } catch (enhancedError) {
+        console.error('Enhanced proxy fallback failed:', enhancedError);
+        
+        // Final fallback to basic proxy
+        try {
+          const backendUrl = process.env.REACT_APP_BACKEND_URL || window.location.origin;
+          const basicResponse = await fetch(`${backendUrl}/api/proxy`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: url })
+          });
+          
+          const basicResult = await basicResponse.json();
+          
+          if (basicResult.content) {
+            setIframeContent(basicResult.content);
+            updateCurrentTab({ 
+              url: url, 
+              title: getDomainFromUrl(url),
+              loading: false,
+              favicon: getFaviconForUrl(url)
+            });
+            
+            setPerformanceMetrics({
+              request_time: 0,
+              method_used: 'basic_proxy',
+              tier_used: 'fallback_basic',
+              success_rate: 100,
+              stealth_level: userPreferences.stealth_level
+            });
+            
+            return;
+          }
+        } catch (basicError) {
+          console.error('Basic proxy fallback failed:', basicError);
+        }
+      }
+      
+      // If all fails, show error message
+      setIframeContent(`<html><body><div style="padding: 20px; text-align: center; color: #666;"><h1>⚠️ Navigation Error</h1><p>Unable to load: ${url}</p><p>Error: ${error.message}</p><button onclick="location.reload()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">Try Again</button></div></body></html>`);
     } finally {
       setIsLoading(false);
       setActiveTabLoading(false);
