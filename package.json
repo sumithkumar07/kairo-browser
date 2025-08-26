@@ -1,7 +1,7 @@
 {
-  "name": "kairo-browser-local-first",
+  "name": "kairo-ai-browser-local-first",
   "version": "1.0.0",
-  "description": "Kairo AI Browser - Local-First Architecture",
+  "description": "Kairo AI Browser - Local-First Desktop Application",
   "main": "electron/main.js",
   "private": true,
   "homepage": "./",
@@ -9,8 +9,7 @@
     "start": "electron electron/main.js --no-sandbox",
     "dev": "NODE_ENV=development electron electron/main.js --no-sandbox",
     "build": "npm run build:renderer && npm run build:electron",
-    "build:renderer": "npm run build:react && cp -r build renderer/",
-    "build:react": "npx create-react-app build-temp && cd build-temp && npm run build && cd .. && mv build-temp/build . && rm -rf build-temp",
+    "build:renderer": "echo 'Renderer ready' && ls renderer/",
     "build:electron": "electron-builder",
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
@@ -19,7 +18,9 @@
     "dist:linux": "electron-builder --linux",
     "install:playwright": "npx playwright install chromium",
     "postinstall": "npm run install:playwright",
-    "setup": "node install.js"
+    "setup": "node install.js",
+    "test": "npm run test:core",
+    "test:core": "node test-core.js"
   },
   "dependencies": {
     "dotenv": "^17.2.1",
@@ -36,7 +37,7 @@
     "electron-builder": "^24.6.4"
   },
   "build": {
-    "appId": "com.kairoai.browser",
+    "appId": "com.kairoai.browser-local-first",
     "productName": "Kairo AI Browser",
     "directories": {
       "output": "dist"
@@ -46,7 +47,8 @@
       "orchestrator/**/*",
       "sync/**/*",
       "renderer/**/*",
-      "package.json"
+      "package.json",
+      ".env.example"
     ],
     "extraResources": [
       {
@@ -103,6 +105,9 @@
     "ai",
     "automation",
     "local-first",
-    "desktop"
+    "desktop",
+    "electron",
+    "chromium",
+    "privacy"
   ]
 }
