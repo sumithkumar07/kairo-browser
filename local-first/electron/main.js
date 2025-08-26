@@ -273,6 +273,18 @@ class KairoLocalBrowser {
       };
     });
 
+    // App information (for LocalFirstDetector)
+    ipcMain.handle('get-app-info', async (event) => {
+      return {
+        appName: 'Kairo AI Browser',
+        version: app.getVersion(),
+        platform: os.platform(),
+        arch: os.arch(),
+        isLocalFirst: true,
+        environment: 'local-first'
+      };
+    });
+
     // File operations
     ipcMain.handle('file-save', async (event, filepath, content) => {
       try {
