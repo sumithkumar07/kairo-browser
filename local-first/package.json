@@ -9,7 +9,8 @@
     "start": "electron electron/main.js --no-sandbox",
     "dev": "NODE_ENV=development electron electron/main.js --no-sandbox",
     "build": "npm run build:renderer && npm run build:electron",
-    "build:renderer": "cd ../frontend && npm run build && cp -r build ../local-first/renderer/",
+    "build:renderer": "npm run build:react && cp -r build renderer/",
+    "build:react": "npx create-react-app build-temp && cd build-temp && npm run build && cd .. && mv build-temp/build . && rm -rf build-temp",
     "build:electron": "electron-builder",
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
@@ -17,7 +18,8 @@
     "dist:win": "electron-builder --win",
     "dist:linux": "electron-builder --linux",
     "install:playwright": "npx playwright install chromium",
-    "postinstall": "npm run install:playwright"
+    "postinstall": "npm run install:playwright",
+    "setup": "node install.js"
   },
   "dependencies": {
     "dotenv": "^17.2.1",
