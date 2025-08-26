@@ -145,9 +145,14 @@ function createMenu() {
 app.whenReady().then(async () => {
   console.log('🔧 Initializing Kairo AI Browser Local-First Edition...');
   
-  // Disable sandbox for root execution
-  app.commandLine.appendSwitch('--no-sandbox');
-  app.commandLine.appendSwitch('--disable-setuid-sandbox');
+  // Initialize electron-store after app is ready
+  try {
+    const Store = (await import('electron-store')).default;
+    store = new Store();
+    console.log('✅ Local storage initialized');
+  } catch (error) {
+    console.log('⚠️ Local storage initialization failed, continuing without it:', error.message);
+  }
   
   initDatabase();
   createMenu();
