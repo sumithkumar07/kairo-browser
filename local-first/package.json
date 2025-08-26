@@ -6,8 +6,8 @@
   "private": true,
   "homepage": "./",
   "scripts": {
-    "start": "electron electron/main.js",
-    "dev": "NODE_ENV=development electron electron/main.js",
+    "start": "electron electron/main.js --no-sandbox",
+    "dev": "NODE_ENV=development electron electron/main.js --no-sandbox",
     "build": "npm run build:renderer && npm run build:electron",
     "build:renderer": "cd ../frontend && npm run build && cp -r build ../local-first/renderer/",
     "build:electron": "electron-builder",
