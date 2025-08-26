@@ -10,6 +10,7 @@ import {
   Shield,
   Sparkles
 } from 'lucide-react';
+import LocalFirstDetector from './LocalFirstDetector';
 
 const WelcomePage = ({ onStartBrowsing }) => {
   const [isHovering, setIsHovering] = useState(null);
