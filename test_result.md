@@ -1075,7 +1075,7 @@ The system successfully demonstrates:
 - **Test Duration:** 53.89 seconds
 - **Success Rate:** 100% (13/13 tests passed)
 - **Integration Flow:** ✅ WORKING
-- **Backend URL:** https://personal-browser-ai.preview.emergentagent.com
+- **Backend URL:** https://local-arch-shift.preview.emergentagent.com
 - **Real Content Verification:** ✅ CONFIRMED
 
 ### Final Assessment:
@@ -1093,7 +1093,7 @@ The comprehensive backend testing confirms that **ALL requirements from the revi
 
 **🚀 TESTING AGENT CONCLUSION**: The Kairo AI Browser backend demonstrates **COMPLETE OPERATIONAL EXCELLENCE** and is **PRODUCTION-READY**. All enhanced browser capabilities are fully functional, real website content loading is confirmed, and the complete integration chain from AI commands to website display is working perfectly.
 
-**Backend URL Confirmed Working:** https://personal-browser-ai.preview.emergentagent.com
+**Backend URL Confirmed Working:** https://local-arch-shift.preview.emergentagent.com
 **Expected Behavior Confirmed:** All systems fully operational as documented
 
 ---
