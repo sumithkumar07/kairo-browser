@@ -2,5 +2,11 @@
   "devDependencies": {
     "electron": "^37.3.1",
     "electron-builder": "^26.0.12"
+  },
+  "dependencies": {
+    "electron-store": "^10.1.0",
+    "node-fetch": "^3.3.2",
+    "puppeteer-core": "^24.17.0",
+    "sqlite3": "^5.1.7"
   }
 }
