@@ -8,6 +8,7 @@ const path = require('path');
 const { chromium } = require('playwright');
 const fs = require('fs');
 const os = require('os');
+const sqlite3 = require('sqlite3').verbose();
 
 // Local modules
 const BrowserAutomation = require('./browser-automation');
