@@ -1,64 +1,59 @@
-# 🚀 Kairo AI Browser - Local-First Architecture
+# 🚀 Kairo AI Browser - Local-First Desktop Application
 
-A revolutionary AI-powered browser that runs everything locally on your machine for maximum privacy, performance, and capability.
+A revolutionary AI-powered desktop browser that runs everything locally on your machine for maximum privacy, performance, and unrestricted website access.
 
-## 🌟 Key Features
+## ✨ Key Features
 
-### ✅ **What Works Now (No Restrictions!)**
-- 🎥 **YouTube Videos** - Native playback, no proxy issues
-- 🏦 **Banking Sites** - Full access with your credentials
-- 🎬 **Netflix/Streaming** - DRM support with hardware acceleration
-- 📱 **Social Media** - Facebook, Twitter, Instagram without limitations
-- 💼 **Productivity** - Google Docs, Office 365, Notion work perfectly
-- 🛒 **E-commerce** - Amazon, shopping sites with full functionality
+### 🎯 **Unrestricted Website Access**
+- ✅ **YouTube Videos** - Native playback, no proxy issues
+- ✅ **Banking Sites** - Full access with complete functionality  
+- ✅ **Netflix/Streaming** - DRM support with hardware acceleration
+- ✅ **Social Media** - Facebook, Twitter, Instagram without limitations
+- ✅ **Any Website** - 100% compatibility, no restrictions
 
-### 🎯 **AI-Powered Automation**
-- Natural language commands: "Open YouTube and play AI tutorials"
+### 🤖 **AI-Powered Automation**
+- Natural language commands: *"Open YouTube and play AI tutorials"*
 - Smart workflow builder with visual interface
-- Context-aware AI that remembers your preferences
-- Local AI processing for privacy
+- Context-aware AI that remembers your browsing context
+- Local AI processing for maximum privacy
 
-### 🔒 **Privacy & Security**
+### 🔒 **Privacy & Performance**
 - **100% Local-First** - Your data never leaves your machine
-- **No Server Costs** - Runs entirely on your hardware
+- **No Server Costs** - Runs entirely on your hardware  
 - **Offline Capable** - Works without internet connection
-- **Encrypted Local Storage** - Your data stays secure
+- **5-10x Faster** - Native browser speed vs web-based solutions
 
 ## 🏗️ Architecture
 
 ```
-Local Machine (Your Computer)
-├── Electron App (Desktop Interface)
-├── Embedded Chromium (Real Browser Engine)
+Desktop Application (Your Computer)
+├── Electron Shell (Desktop wrapper)
+├── Embedded Chromium (Real browser engine)
 ├── AI Processing (Local API calls)
-├── Workflow Engine (Local Automation)
-├── Local Data Storage (SQLite + Files)
+├── Workflow Engine (Local automation)
+├── SQLite Database (Local storage)
 └── Optional Cloud Sync (Preferences only)
 ```
 
-## 🚀 Getting Started
+## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 18+ 
-- npm or yarn
+- Node.js 18+
 - 4GB+ RAM recommended
 - Windows 10+, macOS 10.15+, or Linux
 
 ### Installation
 
-1. **Clone and Install**
+1. **Clone and Setup**
 ```bash
 git clone https://github.com/kairoai/browser-local-first.git
-cd browser-local-first/local-first
-npm install
+cd browser-local-first
+npm run setup
 ```
 
-2. **Setup Environment**
+2. **Configure Environment** (Optional)
 ```bash
-# Copy environment template
-cp .env.example .env
-
-# Add your AI API key (optional, for enhanced features)
+# Add your AI API key for enhanced features
 echo "GROQ_API_KEY=your_key_here" >> .env
 ```
 
@@ -69,88 +64,28 @@ npm run dev
 
 4. **Build for Production**
 ```bash
-npm run build
-npm run dist          # All platforms
-npm run dist:mac      # macOS only
-npm run dist:win      # Windows only
-npm run dist:linux    # Linux only
+npm run build     # Build application
+npm run dist      # Create installers for all platforms
 ```
 
-## 🔧 Development Setup
-
-### Project Structure
-```
-local-first/
-├── electron/           # Main Electron process
-│   ├── main.js        # Application entry point
-│   ├── preload.js     # Secure IPC bridge
-│   └── browser-automation.js
-├── orchestrator/       # Local engines
-│   ├── workflow-engine.js
-│   ├── ai-integration.js
-│   └── browser-automation.js
-├── sync/              # Optional cloud sync
-│   └── sync-client.js
-└── renderer/          # UI (adapted React components)
-```
-
-### Key Components
-
-#### 🖥️ Main Process (`electron/main.js`)
-- Manages application lifecycle
-- Creates browser windows
-- Handles IPC communication
-- Manages embedded Chromium browser
-
-#### 🤖 AI Integration (`orchestrator/ai-integration.js`)
-- Processes natural language commands
-- Integrates with Groq API for enhanced capabilities
-- Maintains conversation context
-- Generates browser automation workflows
-
-#### ⚡ Browser Automation (`electron/browser-automation.js`)
-- Native browser control using Playwright
-- Executes user commands on real websites
-- Handles complex interactions and workflows
-
-#### 🔄 Workflow Engine (`orchestrator/workflow-engine.js`)
-- Executes multi-step browser automations
-- Manages workflow state and error handling
-- Supports conditional logic and loops
-
-## 🎮 Usage Examples
+## 🎮 Usage
 
 ### Basic Navigation
-```javascript
-// Natural language
-"Open YouTube and search for AI tutorials"
+- Enter any URL in the address bar
+- Use quick access buttons for popular sites
+- Full browser navigation with back/forward/refresh
 
-// Direct API
-await window.kairoAPI.browser.navigate('https://youtube.com');
-```
+### AI Assistant
+- Click the green AI button to open the assistant
+- Say: *"Open YouTube and search for AI news"*
+- Say: *"Navigate to Google and search for weather"*
+- Say: *"Take me to Netflix"*
 
-### AI-Powered Automation
-```javascript
-// Tell the AI what you want
-"Create a workflow that checks my email, downloads attachments, and saves them to Desktop"
-
-// The AI will generate and execute the workflow automatically
-```
-
-### Advanced Workflows
-```javascript
-const workflow = {
-  name: "Morning Routine",
-  steps: [
-    { type: "navigate", params: { url: "https://gmail.com" } },
-    { type: "click", params: { selector: "[data-action='inbox']" } },
-    { type: "extract", params: { selector: ".unread", attribute: "textContent" } },
-    { type: "ai_process", params: { query: "Summarize these emails" } }
-  ]
-};
-
-await window.kairoAPI.workflow.execute(workflow);
-```
+### Advanced Features
+- **Screenshots**: Take full-page screenshots
+- **Workflows**: Create multi-step automation sequences
+- **Local Storage**: All data stays on your machine
+- **Cloud Sync**: Optional sync for preferences only
 
 ## 🆚 Comparison: Local-First vs Web-Based
 
@@ -162,100 +97,89 @@ await window.kairoAPI.workflow.execute(workflow);
 | **Privacy** | ✅ 100% local | ❌ Data on servers |
 | **Offline Mode** | ✅ Works offline | ❌ Requires internet |
 | **Monthly Costs** | ✅ $0 | ❌ $500+ server costs |
-| **Scalability** | ✅ Infinite (user's machine) | ❌ Server limitations |
+
+## 🔧 Development
+
+### Project Structure
+```
+/app/
+├── electron/           # Main Electron process
+│   ├── main.js        # Application entry point
+│   ├── preload.js     # Secure IPC bridge
+│   └── browser-automation.js
+├── orchestrator/       # Local engines
+│   ├── workflow-engine.js
+│   ├── ai-integration.js
+│   └── browser-automation.js
+├── sync/              # Optional cloud sync
+│   └── sync-client.js
+├── renderer/          # React UI
+│   ├── index.html     # Main UI
+│   └── App.js         # React components
+└── package.json       # Dependencies & scripts
+```
+
+### Available Scripts
+```bash
+npm run dev          # Development mode
+npm run build        # Build application
+npm run dist         # Create installers
+npm run test         # Run tests
+npm run setup        # First-time setup
+```
 
 ## 🔐 Security & Privacy
 
 ### Local-First Security
 - All data processing happens on your machine
 - No sensitive information sent to servers
-- Encrypted local storage with user keys
+- Encrypted local storage
 - Optional cloud sync only for preferences
 
 ### API Keys
 - AI API keys stored locally and encrypted
 - Used only for enhanced AI features
 - Can run in offline mode without any keys
-- Keys never shared or transmitted insecurely
 
-## 🛠️ Configuration
+## 📊 System Requirements
 
-### Environment Variables
-```bash
-# AI Integration (optional)
-GROQ_API_KEY=your_groq_api_key
+### Minimum
+- 4GB RAM
+- 2GB storage space
+- Any modern processor (Intel/AMD/ARM64)
 
-# Cloud Sync (optional)
-KAIRO_SYNC_URL=https://sync.kairoai.com
-KAIRO_USER_ID=your_user_id
+### Recommended  
+- 8GB RAM
+- 5GB storage space
+- SSD for better performance
 
-# Debug Mode
-NODE_ENV=development
-DEBUG_LEVEL=info
-```
-
-### User Preferences
-All preferences stored locally in:
-- **Windows**: `%USERPROFILE%\.kairo-browser\`
-- **macOS**: `~/Library/Application Support/Kairo AI Browser/`
-- **Linux**: `~/.kairo-browser/`
-
-## 📊 Performance Metrics
-
-### Local-First Advantages
+### Performance Benefits
 - **5-10x faster** response times (no network round trips)
 - **90%+ cost reduction** (no server infrastructure)
 - **100% uptime** (no server dependencies)
 - **Unlimited usage** (no API rate limits)
 
-### System Requirements
-- **Minimum**: 4GB RAM, 2GB storage
-- **Recommended**: 8GB RAM, 5GB storage
-- **CPU**: Any modern processor (Intel/AMD/ARM)
+## 🌟 What You Get
 
-## 🐛 Troubleshooting
+### **Native Website Access**
+- YouTube videos play without any restrictions
+- Banking sites work with full functionality
+- Netflix and streaming services with DRM support
+- Social media platforms without limitations
 
-### Common Issues
+### **AI-Powered Automation**
+- Natural language web navigation
+- Automated workflows and tasks
+- Context-aware assistance
+- Privacy-focused local processing
 
-#### Browser Engine Not Starting
-```bash
-# Reinstall Playwright browsers
-npm run install:playwright
+### **Desktop-Class Experience**
+- Native window controls and menus
+- Keyboard shortcuts and hotkeys
+- System notifications and integration
+- Offline functionality
 
-# Check system requirements
-npm run system-check
-```
-
-#### AI Features Not Working
-```bash
-# Verify API key
-echo $GROQ_API_KEY
-
-# Test API connection
-npm run test:ai
-```
-
-#### Sync Issues
-```bash
-# Reset local data
-rm -rf ~/.kairo-browser/sync/
-
-# Reinitialize sync
-npm run sync:init
-```
-
-## 🤝 Contributing
-
-We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-### Development Workflow
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## 📄 License
+## 📝 License
 
 MIT License - see [LICENSE](LICENSE) for details.
 
@@ -268,6 +192,6 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ---
 
-**Built with ❤️ by the Kairo AI team**
+**🎉 Ready to experience the future of browsing?**
 
-*Making AI-powered browsing accessible, private, and powerful for everyone.*
+*Built with ❤️ by the Kairo AI team - Making AI-powered browsing accessible, private, and powerful for everyone.*
