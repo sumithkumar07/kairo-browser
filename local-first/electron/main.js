@@ -25,8 +25,44 @@ class KairoLocalBrowser {
     this.syncClient = new SyncClient();
     this.chromiumContext = null;
     this.activePage = null;
+    this.db = null; // SQLite database
     
     this.setupApp();
+  }
+
+  // Initialize local database
+  initDatabase() {
+    const dbPath = path.join(app.getPath('userData'), 'kairo_local.db');
+    this.db = new sqlite3.Database(dbPath);
+    
+    console.log('📂 Database initialized at:', dbPath);
+    
+    // Create tables for local storage
+    this.db.serialize(() => {
+      this.db.run(`CREATE TABLE IF NOT EXISTS sessions (
+        id TEXT PRIMARY KEY,
+        data TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`);
+      
+      this.db.run(`CREATE TABLE IF NOT EXISTS ai_interactions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        session_id TEXT,
+        query TEXT,
+        response TEXT,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`);
+      
+      this.db.run(`CREATE TABLE IF NOT EXISTS browser_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        session_id TEXT,
+        url TEXT,
+        title TEXT,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`);
+      
+      console.log('✅ Database tables created successfully');
+    });
   }
 
   setupApp() {
