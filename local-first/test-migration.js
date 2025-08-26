@@ -227,7 +227,7 @@ class MigrationTester {
     if (detectorExists) {
       try {
         const content = fs.readFileSync('/app/frontend/src/components/LocalFirstDetector.js', 'utf8');
-        hasElectronCheck = content.includes('window.electronAPI') && content.includes('isLocalFirst');
+        hasElectronCheck = content.includes('window.kairoAPI') && content.includes('isLocalFirst');
       } catch (error) {
         // Ignore read errors
       }
@@ -235,7 +235,7 @@ class MigrationTester {
     
     this.results.phase2.localFirstDetection = detectorExists && hasElectronCheck;
     console.log(`    ${detectorExists ? '✅' : '❌'} LocalFirstDetector component exists`);
-    console.log(`    ${hasElectronCheck ? '✅' : '❌'} Electron API detection implemented`);
+    console.log(`    ${hasElectronCheck ? '✅' : '❌'} KairoAPI detection implemented`);
   }
 
   printSummary() {
