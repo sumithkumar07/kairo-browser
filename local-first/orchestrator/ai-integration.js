@@ -4,6 +4,7 @@
  */
 
 const https = require('https');
+require('dotenv').config();
 
 class AIIntegration {
   constructor() {
