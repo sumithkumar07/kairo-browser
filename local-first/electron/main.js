@@ -117,10 +117,11 @@ class KairoLocalBrowser {
     // Load the React app
     const isDev = process.env.NODE_ENV === 'development';
     if (isDev) {
-      this.mainWindow.loadURL('http://localhost:3000');
+      // Load from local HTML file in development
+      this.mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
       this.mainWindow.webContents.openDevTools();
     } else {
-      this.mainWindow.loadFile(path.join(__dirname, '../renderer/build/index.html'));
+      this.mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
     }
 
     // Show window when ready
