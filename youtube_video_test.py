@@ -428,9 +428,13 @@ class YouTubeVideoIntegrationTester:
         
         # Specific findings
         print(f"\n🔍 SPECIFIC FINDINGS:")
-        print(f"   🤖 AI Processing: {'✅ Working' if any('AI' in test for test in [t for t in range(self.tests_run) if t < self.tests_passed]) else '❌ Issues detected'}")
-        print(f"   🌐 Browser Access: {'✅ Working' if any('Browser' in str(self.failed_tests)) == False else '❌ Issues detected'}")
-        print(f"   🔄 Proxy System: {'✅ Working' if any('Proxy' in str(self.failed_tests)) == False else '❌ Issues detected'}")
+        ai_working = not any('AI' in failure for failure in self.failed_tests)
+        browser_working = not any('Browser' in failure for failure in self.failed_tests)
+        proxy_working = not any('Proxy' in failure for failure in self.failed_tests)
+        
+        print(f"   🤖 AI Processing: {'✅ Working' if ai_working else '❌ Issues detected'}")
+        print(f"   🌐 Browser Access: {'✅ Working' if browser_working else '❌ Issues detected'}")
+        print(f"   🔄 Proxy System: {'✅ Working' if proxy_working else '❌ Issues detected'}")
         print(f"   🎬 Video Functionality: {'✅ Working' if success_rate >= 70 else '❌ Issues detected'}")
         
         return success_rate >= 70
