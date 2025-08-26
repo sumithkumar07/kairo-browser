@@ -72,7 +72,10 @@ class KairoLocalBrowser {
     app.commandLine.appendSwitch('disable-web-security');
     
     // Handle app events
-    app.whenReady().then(() => this.createWindow());
+    app.whenReady().then(() => {
+      this.initDatabase();
+      this.createWindow();
+    });
     app.on('window-all-closed', () => {
       if (process.platform !== 'darwin') {
         this.cleanup();
