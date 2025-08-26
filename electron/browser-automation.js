@@ -70,6 +70,8 @@ class BrowserAutomation {
     });
     
     return {
+      action: 'navigated',
+      success: true,
       url: page.url(),
       title: await page.title(),
       status: response?.status() || 200
