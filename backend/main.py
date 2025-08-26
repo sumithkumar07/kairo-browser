@@ -183,6 +183,146 @@ Examples:
         logger.error(f"Error processing AI query: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error processing query: {str(e)}")
 
+@app.post("/api/ai/multimodal-query")
+async def process_multimodal_ai_query(query: AIQuery):
+    """Process multimodal AI query and return enhanced browser commands with predictions"""
+    try:
+        logger.info(f"Processing multimodal AI query: {query.query}")
+        if not groq_client:
+            logger.error("Groq API not configured")
+            raise HTTPException(status_code=500, detail="Groq API not configured")
+        
+        logger.info("Groq client available, making multimodal API call")
+        # Enhanced system prompt for multimodal YouTube video functionality
+        system_prompt = """You are Ultimate Kairo AI, an advanced multimodal browser assistant with enhanced YouTube video capabilities. You help users navigate and interact with websites through natural language commands.
+
+When a user asks you to do something, break it down into specific browser actions:
+- open: Navigate to a URL (use this for regular page navigation)
+- browser_action: Enhanced browser action with specific targeting
+- youtube_video: Special enhanced command for YouTube video access with ultimate capabilities
+- click: Click on an element (provide CSS selector)  
+- type: Type text into an input field
+- search: Search on current page
+- scroll: Scroll the page
+- extract: Extract information from the page
+- screenshot: Take a screenshot
+- wait: Wait for an element to appear
+
+For YouTube video requests like "play this video in youtube [song name]", use the youtube_video command type which has ULTIMATE capabilities:
+- Direct YouTube video access with anti-bot protection
+- Bypass ALL YouTube restrictions and iframe blocking
+- Enhanced search with smart video matching
+- Real video player access and control
+- Military-grade stealth protection
+- Bulletproof fallback systems
+
+For the specific request "play this video in youtube yeh raatein yeh mausam", generate:
+{
+  "type": "youtube_video",
+  "params": {
+    "search_query": "yeh raatein yeh mausam",
+    "url": "https://youtube.com/results?search_query=yeh+raatein+yeh+mausam",
+    "action": "open_youtube_video",
+    "video_title": "yeh raatein yeh mausam",
+    "enhanced_search": true,
+    "stealth_mode": true
+  }
+}
+
+Respond with a JSON object containing:
+{
+  "intent": "description of what user wants",
+  "commands": [
+    {
+      "type": "action_type",
+      "params": {
+        "url": "url if needed",
+        "selector": "css selector if needed", 
+        "text": "text to type if needed",
+        "element": "description of element to interact with",
+        "search_query": "for youtube_video commands, the video search query",
+        "action": "specific action to perform",
+        "enhanced_search": true,
+        "stealth_mode": true
+      }
+    }
+  ],
+  "explanation": "Human readable explanation of what you'll do",
+  "next_suggestions": ["suggestion 1", "suggestion 2", "suggestion 3"],
+  "visual_feedback": "Enhanced visual feedback message"
+}
+
+Examples:
+- "Open YouTube" -> {"intent": "open YouTube", "commands": [{"type": "open", "params": {"url": "https://youtube.com"}}]}
+- "play this video in youtube yeh raatein yeh mausam" -> {"intent": "play YouTube video", "commands": [{"type": "youtube_video", "params": {"search_query": "yeh raatein yeh mausam", "url": "https://youtube.com/results?search_query=yeh+raatein+yeh+mausam", "action": "open_youtube_video", "enhanced_search": true, "stealth_mode": true}}]}
+"""
+
+        logger.info("Making Groq multimodal API request")
+        response = groq_client.chat.completions.create(
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": query.query}
+            ],
+            model="llama3-8b-8192",
+            temperature=0.3,
+            max_tokens=1200
+        )
+        
+        logger.info("Groq multimodal API response received")
+        ai_response = response.choices[0].message.content
+        logger.info(f"Multimodal AI response: {ai_response[:100]}...")
+        
+        # Try to parse JSON response
+        try:
+            # Extract JSON from response if it contains extra text
+            json_start = ai_response.find('{')
+            json_end = ai_response.rfind('}') + 1
+            if json_start != -1 and json_end > json_start:
+                json_content = ai_response[json_start:json_end]
+                parsed_response = json.loads(json_content)
+            else:
+                parsed_response = json.loads(ai_response)
+        except json.JSONDecodeError:
+            # If not JSON, create a enhanced response
+            parsed_response = {
+                "intent": query.query,
+                "commands": [],
+                "explanation": ai_response,
+                "next_suggestions": ["Try voice command", "Upload an image", "Ask for help"],
+                "visual_feedback": "Ready for next command"
+            }
+        
+        # Ensure response has required multimodal fields
+        if "next_suggestions" not in parsed_response:
+            parsed_response["next_suggestions"] = ["Try another command", "Need help?", "Explore more"]
+        if "visual_feedback" not in parsed_response:
+            parsed_response["visual_feedback"] = "Command processed successfully"
+        
+        # Store the interaction
+        logger.info("Storing multimodal interaction in database")
+        interaction = {
+            "session_id": query.session_id or str(uuid.uuid4()),
+            "query": query.query,
+            "response": parsed_response,
+            "timestamp": datetime.now(),
+            "context": query.context,
+            "type": "multimodal"
+        }
+        db.ai_interactions.insert_one(interaction)
+        logger.info("Multimodal interaction stored successfully")
+        
+        return {
+            "success": True,
+            "response": parsed_response
+        }
+        
+    except Exception as e:
+        logger.error(f"Error processing multimodal AI query: {str(e)}")
+        return {
+            "success": False,
+            "error": f"Error processing multimodal query: {str(e)}"
+        }
+
 @app.post("/api/browser/execute")
 async def execute_browser_command(command: BrowserCommand):
     """Execute a browser command"""
