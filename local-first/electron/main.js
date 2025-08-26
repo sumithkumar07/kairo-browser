@@ -66,6 +66,11 @@ class KairoLocalBrowser {
   }
 
   setupApp() {
+    // Container environment compatibility
+    app.commandLine.appendSwitch('no-sandbox');
+    app.commandLine.appendSwitch('disable-setuid-sandbox');
+    app.commandLine.appendSwitch('disable-dev-shm-usage');
+    
     // Enable hardware acceleration
     app.commandLine.appendSwitch('enable-features', 'VaapiVideoDecoder');
     app.commandLine.appendSwitch('ignore-certificate-errors');
