@@ -142,6 +142,10 @@ function createMenu() {
 app.whenReady().then(async () => {
   console.log('🔧 Initializing Kairo AI Browser Local-First Edition...');
   
+  // Disable sandbox for root execution
+  app.commandLine.appendSwitch('--no-sandbox');
+  app.commandLine.appendSwitch('--disable-setuid-sandbox');
+  
   initDatabase();
   createMenu();
   createWindow();
