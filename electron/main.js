@@ -3,6 +3,10 @@ const path = require('path');
 const Store = require('electron-store');
 const sqlite3 = require('sqlite3').verbose();
 
+// Disable sandbox for compatibility
+app.commandLine.appendSwitch('--no-sandbox');
+app.commandLine.appendSwitch('--disable-setuid-sandbox');
+
 // Local data storage
 const store = new Store();
 let mainWindow;
