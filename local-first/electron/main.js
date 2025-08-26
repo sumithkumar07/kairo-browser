@@ -416,6 +416,16 @@ class KairoLocalBrowser {
       if (this.chromiumContext) {
         await this.chromiumContext.close();
       }
+
+      if (this.db) {
+        this.db.close((err) => {
+          if (err) {
+            console.error('❌ Error closing database:', err);
+          } else {
+            console.log('✅ Database closed successfully');
+          }
+        });
+      }
       
       console.log('✅ Cleanup completed');
     } catch (error) {
