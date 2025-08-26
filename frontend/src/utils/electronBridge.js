@@ -197,12 +197,13 @@ class ElectronBridge {
         }
     }
 
-    // Fallback methods for web version
+    // Fallback methods for web version (legacy support)
     async webNavigate(url) {
         try {
+            console.log('🌐 Web fallback navigation - Consider upgrading to desktop app for better experience');
             const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
             
-            // First try AI query to process the URL request
+            // Use streamlined backend for basic AI processing
             const aiResponse = await fetch(`${backendUrl}/api/ai/query`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -215,53 +216,35 @@ class ElectronBridge {
             if (aiResponse.ok) {
                 const aiResult = await aiResponse.json();
                 
-                // Execute the browser command
-                if (aiResult.commands && aiResult.commands.length > 0) {
-                    const command = aiResult.commands[0];
-                    
-                    const execResponse = await fetch(`${backendUrl}/api/browser/execute`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(command)
-                    });
-
-                    if (execResponse.ok) {
-                        const execResult = await execResponse.json();
-                        
-                        // Try to load content via proxy
-                        const proxyResponse = await fetch(`${backendUrl}/api/proxy/enhanced`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ url: url })
-                        });
-
-                        if (proxyResponse.ok) {
-                            const proxyResult = await proxyResponse.json();
-                            return {
-                                success: true,
-                                url: url,
-                                content: proxyResult.content,
-                                method: 'web_proxy'
-                            };
-                        }
-                    }
-                }
+                return {
+                    success: true,
+                    url: url,
+                    explanation: aiResult.explanation,
+                    commands: aiResult.commands || [],
+                    method: 'web_legacy',
+                    recommendation: 'For full website access, please use the desktop app'
+                };
             }
 
             return {
                 success: false,
-                error: 'Navigation failed',
+                error: 'Web version has limited capabilities. Please use desktop app.',
                 fallback: true
             };
 
         } catch (error) {
             console.error('❌ Web navigation error:', error);
-            return { success: false, error: error.message };
+            return { 
+                success: false, 
+                error: error.message,
+                recommendation: 'Desktop app provides full website access without restrictions'
+            };
         }
     }
 
     async webAIQuery(query) {
         try {
+            console.log('🤖 Web fallback AI query - Consider upgrading to desktop app for enhanced features');
             const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
             
             const response = await fetch(`${backendUrl}/api/ai/query`, {
@@ -277,8 +260,10 @@ class ElectronBridge {
                 const result = await response.json();
                 return {
                     success: true,
-                    response: result.response,
-                    commands: result.commands || []
+                    response: result,
+                    commands: result.commands || [],
+                    method: 'web_legacy',
+                    limitation: 'Web version cannot execute browser commands. Desktop app provides full automation.'
                 };
             }
 
