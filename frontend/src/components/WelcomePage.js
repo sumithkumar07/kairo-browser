@@ -135,6 +135,9 @@ const WelcomePage = ({ onStartBrowsing }) => {
           </motion.div>
         </motion.div>
 
+        {/* Local-First Architecture Detector */}
+        <LocalFirstDetector />
+
         {/* Features Grid */}
         <motion.div 
           initial={{ opacity: 0, y: 40 }}
