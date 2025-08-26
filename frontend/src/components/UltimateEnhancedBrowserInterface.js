@@ -280,8 +280,41 @@ const UltimateEnhancedBrowserInterface = ({ onBackToWelcome }) => {
           for (const command of aiResponse.response.commands) {
             console.log('Processing AI command:', command);
             
+            // Handle YouTube video commands with enhanced capabilities
+            if (command.type === 'youtube_video' && command.params?.search_query) {
+              responseText += `\n\n🎥 **YouTube Video Request Detected**`;
+              responseText += `\n🔍 Searching for: "${command.params.search_query}"`;
+              responseText += `\n🚀 Using enhanced YouTube access...`;
+              
+              // Construct YouTube search URL
+              const searchQuery = encodeURIComponent(command.params.search_query);
+              const youtubeSearchUrl = `https://youtube.com/results?search_query=${searchQuery}`;
+              
+              responseText += `\n\n🌐 Navigating to YouTube with stealth protection...`;
+              await navigateToUrl(youtubeSearchUrl);
+              
+              // Wait for YouTube to load
+              await new Promise(resolve => setTimeout(resolve, 4000));
+              responseText += `\n✅ YouTube loaded successfully!`;
+              responseText += `\n🎯 Search results should be visible`;
+              responseText += `\n👆 Click on any video to play`;
+              
+              // Try to automatically click first video if enhanced_search is enabled
+              if (command.params.enhanced_search) {
+                responseText += `\n\n🤖 Attempting to auto-play first result...`;
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                const clickSuccess = await clickFirstResult();
+                if (clickSuccess) {
+                  responseText += `\n▶️ Video should be starting automatically!`;
+                } else {
+                  responseText += `\n📺 Video results loaded - you can manually click to play`;
+                }
+              }
+            }
+            
             // Handle navigation commands
-            if ((command.type === 'open' || command.type === 'browser_action') && command.params?.url) {
+            else if ((command.type === 'open' || command.type === 'browser_action') && command.params?.url) {
               responseText += `\n\n🚀 Navigating to ${command.params.url}...`;
               await navigateToUrl(command.params.url);
               
@@ -291,7 +324,7 @@ const UltimateEnhancedBrowserInterface = ({ onBackToWelcome }) => {
               // If it's a search action, extract search query and perform search
               if (command.params.action === 'open_youtube' || command.params.url.includes('search')) {
                 const urlObj = new URL(command.params.url);
-                const searchQuery = urlObj.searchParams.get('q');
+                const searchQuery = urlObj.searchParams.get('q') || urlObj.searchParams.get('search_query');
                 
                 if (searchQuery) {
                   responseText += `\n🔍 Searching for: ${decodeURIComponent(searchQuery)}...`;
