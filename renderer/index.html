@@ -420,6 +420,8 @@
       // Initialize System
       useEffect(() => {
         initializeSystem();
+        initializeVoiceCommands();
+        initializeAdvancedAI();
         
         // Listen for system events
         if (window.kairoAPI) {
@@ -433,6 +435,7 @@
             console.log('Browser updated:', data);
             if (data.url) setCurrentUrl(data.url);
             if (data.title) setPageTitle(data.title);
+            updateActiveTab(data.url, data.title);
             setIsLoading(false);
           });
         }
@@ -442,6 +445,10 @@
             window.kairoAPI.removeListener('system-ready', () => {});
             window.kairoAPI.removeListener('browser-updated', () => {});
           }
+          // Cleanup voice recognition
+          if (speechRecognitionRef.current) {
+            speechRecognitionRef.current.stop();
+          }
         };
       }, []);
 
@@ -449,6 +456,61 @@
       useEffect(() => {
         scrollToBottom();
       }, [messages]);
+
+      // 🎤 Voice Commands Initialization
+      const initializeVoiceCommands = () => {
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+          const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+          speechRecognitionRef.current = new SpeechRecognition();
+          
+          speechRecognitionRef.current.continuous = false;
+          speechRecognitionRef.current.interimResults = true;
+          speechRecognitionRef.current.lang = 'en-US';
+
+          speechRecognitionRef.current.onstart = () => {
+            setIsListening(true);
+            setVoiceTranscript('');
+          };
+
+          speechRecognitionRef.current.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            setVoiceTranscript(transcript);
+            
+            if (event.results[0].isFinal) {
+              setInputValue(transcript);
+              setIsListening(false);
+              // Auto-send voice command
+              setTimeout(() => handleAICommand(transcript), 500);
+            }
+          };
+
+          speechRecognitionRef.current.onerror = (event) => {
+            console.error('Voice recognition error:', event.error);
+            setIsListening(false);
+          };
+
+          speechRecognitionRef.current.onend = () => {
+            setIsListening(false);
+          };
+
+          setVoiceSupported(true);
+        } else {
+          console.log('Voice recognition not supported');
+          setVoiceSupported(false);
+        }
+      };
+
+      // 🧠 Advanced AI Features Initialization
+      const initializeAdvancedAI = () => {
+        // Load user preferences from localStorage
+        const savedPrefs = localStorage.getItem('kairo-user-preferences');
+        if (savedPrefs) {
+          setUserPreferences(JSON.parse(savedPrefs));
+        }
+
+        // Generate initial smart suggestions
+        generateSmartSuggestions();
+      };
 
       const initializeSystem = async () => {
         try {
