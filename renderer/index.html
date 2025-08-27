@@ -317,6 +317,7 @@
         }
 
         setIsLoading(true);
+        setShowRealBrowser(true); // Show real browser when navigating
         
         try {
           if (window.kairoAPI?.browser && browserReady) {
@@ -324,11 +325,21 @@
             if (result.success) {
               setCurrentUrl(result.url);
               setPageTitle(result.title || 'Loading...');
+              
+              // Update webview if it exists
+              if (webviewRef.current) {
+                webviewRef.current.src = result.url;
+              }
             }
           } else {
-            // Demo mode
+            // Demo mode - show real website in iframe
             setCurrentUrl(url);
             setPageTitle('Demo - ' + new URL(url).hostname);
+            
+            if (webviewRef.current) {
+              webviewRef.current.src = url;
+            }
+            
             setTimeout(() => setIsLoading(false), 1000);
           }
         } catch (error) {
