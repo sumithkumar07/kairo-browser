@@ -1404,10 +1404,25 @@
                         )}
                         
                         {message.role === 'user' && (
-                          <div>
-                            <p className="leading-relaxed">{message.content}</p>
-                            <div className="mt-1 text-xs text-blue-200">
-                              {formatTimestamp(message.timestamp)}
+                          <div className="flex items-start space-x-2">
+                            {message.isVoice && (
+                              <div className="flex-shrink-0 mt-1">
+                                <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                                  <Mic className="w-2 h-2 text-white" />
+                                </div>
+                              </div>
+                            )}
+                            <div className="flex-1">
+                              <p className="leading-relaxed">{message.content}</p>
+                              <div className="mt-1 text-xs text-blue-200 flex items-center space-x-2">
+                                <span>{formatTimestamp(message.timestamp)}</span>
+                                {message.isVoice && (
+                                  <span className="flex items-center space-x-1">
+                                    <Mic className="w-3 h-3" />
+                                    <span>Voice</span>
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
                         )}
