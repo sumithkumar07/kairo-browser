@@ -339,9 +339,13 @@ class WorkflowEngine {
    * Process and validate tasks
    */
   processTasks(tasks) {
+    if (!tasks || !Array.isArray(tasks)) {
+      return [];
+    }
+    
     return tasks.map((task, index) => ({
       id: task.id || `task_${index + 1}`,
-      name: task.name || `Task ${index + 1}`,
+      name: task.name || task.type || `Task ${index + 1}`,
       type: task.type,
       description: task.description || '',
       params: task.params || {},
