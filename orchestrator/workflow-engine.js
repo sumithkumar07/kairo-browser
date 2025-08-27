@@ -44,6 +44,17 @@ class WorkflowEngine {
    * Execute a workflow with enhanced monitoring
    */
   async execute(workflow, context = {}) {
+    // Handle both new workflow format and legacy test format
+    if (!workflow.id && !workflow.name) {
+      // This is a legacy test workflow, convert it
+      workflow = {
+        id: workflow.id || 'legacy_workflow',
+        name: workflow.name || 'Legacy Workflow',
+        tasks: workflow.steps || workflow.tasks || [],
+        options: workflow.options || {}
+      };
+    }
+
     const executionId = uuidv4();
     
     console.log(`🚀 Executing workflow: ${workflow.name}`);
@@ -79,8 +90,9 @@ class WorkflowEngine {
       
       return {
         id: executionId,
+        status: 'completed', // Add status for legacy compatibility
         success: true,
-        results: results,
+        results: Array.from(results.values()), // Convert Map to Array for compatibility
         duration: execution.duration,
         summary: this.generateExecutionSummary(execution, results)
       };
@@ -93,7 +105,14 @@ class WorkflowEngine {
       
       console.error(`❌ Workflow failed: ${workflow.name}`, error);
       
-      throw error;
+      return {
+        id: executionId,
+        status: 'failed',
+        success: false,
+        error: error.message,
+        results: Array.from(execution.results.values()),
+        duration: execution.duration
+      };
     } finally {
       this.activeExecutions.delete(executionId);
     }
