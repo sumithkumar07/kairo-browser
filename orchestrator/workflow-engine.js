@@ -55,6 +55,13 @@ class WorkflowEngine {
       };
     }
 
+    // Ensure tasks are processed
+    if (workflow.tasks && !workflow.tasks[0]?.id) {
+      workflow.tasks = this.processTasks(workflow.tasks);
+    } else if (workflow.steps && !workflow.steps[0]?.id) {
+      workflow.tasks = this.processTasks(workflow.steps);
+    }
+
     const executionId = uuidv4();
     
     console.log(`🚀 Executing workflow: ${workflow.name}`);
