@@ -1,381 +1,463 @@
 /**
- * Workflow Engine - Local-First Implementation
- * Executes workflows locally with native browser automation
+ * Advanced Workflow Engine
+ * Handles complex multi-step browser automation workflows
  */
 
 const { v4: uuidv4 } = require('uuid');
 
 class WorkflowEngine {
   constructor() {
-    this.activeWorkflows = new Map();
-    this.workflowHistory = [];
+    this.workflows = new Map();
+    this.activeExecutions = new Map();
+    this.workflowTemplates = new Map();
+    this.executionHistory = [];
   }
 
   /**
-   * Execute a workflow locally
+   * Create a new workflow from AI-generated tasks
+   */
+  async createWorkflow(name, description, tasks, options = {}) {
+    const workflowId = uuidv4();
+    
+    const workflow = {
+      id: workflowId,
+      name: name,
+      description: description,
+      tasks: this.processTasks(tasks),
+      options: {
+        parallel: options.parallel || false,
+        maxRetries: options.maxRetries || 3,
+        timeout: options.timeout || 60000,
+        ...options
+      },
+      created: new Date().toISOString(),
+      version: '1.0.0'
+    };
+    
+    this.workflows.set(workflowId, workflow);
+    console.log(`📋 Workflow created: ${name} (${workflowId})`);
+    
+    return workflow;
+  }
+
+  /**
+   * Execute a workflow with enhanced monitoring
    */
   async execute(workflow, context = {}) {
     const executionId = uuidv4();
+    
+    console.log(`🚀 Executing workflow: ${workflow.name}`);
+    
     const execution = {
       id: executionId,
-      workflowId: workflow.id || uuidv4(),
-      name: workflow.name,
-      steps: workflow.steps || [],
+      workflowId: workflow.id,
       status: 'running',
-      startTime: new Date(),
-      results: [],
-      context: context
+      startTime: Date.now(),
+      context: context,
+      results: new Map(),
+      errors: [],
+      progress: 0
     };
-
-    this.activeWorkflows.set(executionId, execution);
-
+    
+    this.activeExecutions.set(executionId, execution);
+    
     try {
-      console.log(`🔄 Starting workflow execution: ${workflow.name} (${executionId})`);
-
-      const { page, browserAutomation, aiIntegration } = context;
+      const results = await this.executeWorkflowTasks(workflow, execution);
       
-      if (!page) {
-        throw new Error('Browser page context required for workflow execution');
-      }
-
-      // Execute steps sequentially
-      for (let i = 0; i < execution.steps.length; i++) {
-        const step = execution.steps[i];
-        const stepResult = await this.executeStep(step, {
-          page,
-          browserAutomation,
-          aiIntegration,
-          workflowContext: execution,
-          stepIndex: i
-        });
-
-        execution.results.push(stepResult);
-
-        // Update workflow status
-        execution.status = stepResult.success ? 'running' : 'failed';
-        
-        if (!stepResult.success) {
-          console.error(`❌ Workflow step ${i + 1} failed:`, stepResult.error);
-          break;
-        }
-
-        console.log(`✅ Workflow step ${i + 1} completed:`, stepResult.action);
-
-        // Add delay between steps if specified
-        if (step.delay) {
-          await new Promise(resolve => setTimeout(resolve, step.delay));
-        }
-      }
-
-      // Mark as completed if all steps succeeded
-      if (execution.status === 'running') {
-        execution.status = 'completed';
-      }
-
-      execution.endTime = new Date();
+      execution.status = 'completed';
+      execution.endTime = Date.now();
       execution.duration = execution.endTime - execution.startTime;
-
-      console.log(`🎉 Workflow execution ${execution.status}: ${workflow.name}`);
-
-      // Move to history
-      this.workflowHistory.push(execution);
-      this.activeWorkflows.delete(executionId);
-
-      return execution;
-
-    } catch (error) {
-      console.error(`❌ Workflow execution failed:`, error);
+      execution.progress = 100;
       
+      console.log(`✅ Workflow completed: ${workflow.name} (${execution.duration}ms)`);
+      
+      // Store in history
+      this.executionHistory.push({
+        ...execution,
+        summary: this.generateExecutionSummary(execution, results)
+      });
+      
+      return {
+        id: executionId,
+        success: true,
+        results: results,
+        duration: execution.duration,
+        summary: this.generateExecutionSummary(execution, results)
+      };
+      
+    } catch (error) {
       execution.status = 'failed';
       execution.error = error.message;
-      execution.endTime = new Date();
+      execution.endTime = Date.now();
       execution.duration = execution.endTime - execution.startTime;
-
-      this.workflowHistory.push(execution);
-      this.activeWorkflows.delete(executionId);
-
+      
+      console.error(`❌ Workflow failed: ${workflow.name}`, error);
+      
       throw error;
+    } finally {
+      this.activeExecutions.delete(executionId);
     }
   }
 
   /**
-   * Execute a single workflow step
+   * Execute workflow tasks with proper dependency management
    */
-  async executeStep(step, context) {
-    const { page, browserAutomation, aiIntegration, stepIndex } = context;
+  async executeWorkflowTasks(workflow, execution) {
+    const tasks = workflow.tasks;
+    const results = new Map();
     
-    try {
-      console.log(`⚡ Executing step ${stepIndex + 1}: ${step.type}`);
-
-      switch (step.type) {
-        case 'navigate':
-          return await browserAutomation.executeCommand(page, 'navigate', {
-            url: step.url || step.params?.url
-          });
-
-        case 'click':
-          return await browserAutomation.executeCommand(page, 'click', {
-            selector: step.selector || step.params?.selector
-          });
-
-        case 'type':
-          return await browserAutomation.executeCommand(page, 'type', {
-            selector: step.selector || step.params?.selector,
-            text: step.text || step.params?.text
-          });
-
-        case 'wait':
-          return await browserAutomation.executeCommand(page, 'wait', {
-            duration: step.duration || step.params?.duration || 1000
-          });
-
-        case 'wait_for':
-          return await browserAutomation.executeCommand(page, 'waitForSelector', {
-            selector: step.selector || step.params?.selector,
-            timeout: step.timeout || step.params?.timeout || 10000
-          });
-
-        case 'extract':
-          return await browserAutomation.executeCommand(page, 'extract', {
-            selector: step.selector || step.params?.selector,
-            attribute: step.attribute || step.params?.attribute || 'textContent'
-          });
-
-        case 'screenshot':
-          return await browserAutomation.executeCommand(page, 'screenshot', {
-            options: step.options || step.params || {}
-          });
-
-        case 'search':
-          return await browserAutomation.executeCommand(page, 'search', {
-            query: step.query || step.params?.query
-          });
-
-        case 'ai_process':
-          if (!aiIntegration) {
-            throw new Error('AI integration not available');
-          }
-          
-          const aiResult = await aiIntegration.processQuery(
-            step.query || step.params?.query,
-            {
-              currentUrl: page.url(),
-              pageTitle: await page.title(),
-              workflowContext: true
-            }
-          );
-          
-          return {
-            action: 'ai_processed',
-            success: true,
-            result: aiResult
-          };
-
-        case 'condition':
-          return await this.evaluateCondition(step, { page, browserAutomation });
-
-        case 'loop':
-          return await this.executeLoop(step, context);
-
-        case 'script':
-          const scriptResult = await page.evaluate(step.script || step.params?.script);
-          return {
-            action: 'script_executed',
-            success: true,
-            result: scriptResult
-          };
-
-        default:
-          throw new Error(`Unknown step type: ${step.type}`);
-      }
-
-    } catch (error) {
-      return {
-        action: step.type,
-        success: false,
-        error: error.message
-      };
+    if (workflow.options.parallel) {
+      // Execute tasks in parallel where possible
+      return await this.executeParallelTasks(tasks, execution, results);
+    } else {
+      // Execute tasks sequentially
+      return await this.executeSequentialTasks(tasks, execution, results);
     }
   }
 
   /**
-   * Evaluate a condition step
+   * Execute tasks in parallel with dependency resolution
    */
-  async evaluateCondition(step, context) {
-    const { page, browserAutomation } = context;
+  async executeParallelTasks(tasks, execution, results) {
+    const taskGroups = this.groupTasksByDependencies(tasks);
     
-    try {
-      const { condition, onTrue, onFalse } = step.params || step;
+    for (const group of taskGroups) {
+      const promises = group.map(task => this.executeTask(task, execution, results));
+      const groupResults = await Promise.allSettled(promises);
       
-      let conditionResult = false;
-      
-      if (condition.type === 'element_exists') {
-        const element = await page.$(condition.selector);
-        conditionResult = !!element;
-      } else if (condition.type === 'url_contains') {
-        conditionResult = page.url().includes(condition.value);
-      } else if (condition.type === 'text_contains') {
-        const text = await page.textContent('body');
-        conditionResult = text.includes(condition.value);
-      } else if (condition.type === 'script') {
-        conditionResult = await page.evaluate(condition.script);
-      }
-      
-      // Execute appropriate branch
-      const branchSteps = conditionResult ? onTrue : onFalse;
-      if (branchSteps && branchSteps.length > 0) {
-        const branchResults = [];
-        for (const branchStep of branchSteps) {
-          const result = await this.executeStep(branchStep, context);
-          branchResults.push(result);
-          if (!result.success) break;
+      // Process results
+      groupResults.forEach((result, index) => {
+        const task = group[index];
+        if (result.status === 'fulfilled') {
+          results.set(task.id, result.value);
+        } else {
+          execution.errors.push({
+            taskId: task.id,
+            error: result.reason.message,
+            timestamp: Date.now()
+          });
         }
+      });
+      
+      // Update progress
+      execution.progress = (results.size / tasks.length) * 100;
+    }
+    
+    return results;
+  }
+
+  /**
+   * Execute tasks sequentially
+   */
+  async executeSequentialTasks(tasks, execution, results) {
+    for (const task of tasks) {
+      try {
+        const result = await this.executeTask(task, execution, results);
+        results.set(task.id, result);
         
-        return {
-          action: 'condition_evaluated',
-          success: true,
-          conditionResult: conditionResult,
-          branchResults: branchResults
+        // Update progress
+        execution.progress = (results.size / tasks.length) * 100;
+        
+      } catch (error) {
+        execution.errors.push({
+          taskId: task.id,
+          error: error.message,
+          timestamp: Date.now()
+        });
+        
+        if (!task.optional) {
+          throw error; // Stop execution on critical task failure
+        }
+      }
+    }
+    
+    return results;
+  }
+
+  /**
+   * Execute individual task with context and retries
+   */
+  async executeTask(task, execution, previousResults) {
+    const maxRetries = task.retries || execution.context.maxRetries || 3;
+    let lastError;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`⚡ Executing task: ${task.name} (attempt ${attempt})`);
+        
+        // Build task context
+        const taskContext = {
+          ...execution.context,
+          previousResults: Object.fromEntries(previousResults),
+          attempt: attempt,
+          workflowId: execution.workflowId
         };
+        
+        // Execute based on task type
+        const result = await this.executeTaskByType(task, taskContext);
+        
+        console.log(`✅ Task completed: ${task.name}`);
+        return {
+          success: true,
+          data: result,
+          attempts: attempt,
+          duration: Date.now() - execution.startTime
+        };
+        
+      } catch (error) {
+        lastError = error;
+        console.warn(`⚠️ Task attempt ${attempt} failed: ${task.name}`, error.message);
+        
+        if (attempt < maxRetries) {
+          // Wait before retry (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+        }
       }
-      
-      return {
-        action: 'condition_evaluated',
-        success: true,
-        conditionResult: conditionResult
-      };
-      
-    } catch (error) {
-      return {
-        action: 'condition_evaluated',
-        success: false,
-        error: error.message
-      };
     }
+    
+    // All attempts failed
+    throw new Error(`Task failed after ${maxRetries} attempts: ${lastError.message}`);
   }
 
   /**
-   * Execute a loop step
+   * Execute task based on its type
    */
-  async executeLoop(step, context) {
-    const { iterations, steps: loopSteps } = step.params || step;
-    const results = [];
+  async executeTaskByType(task, context) {
+    const { page, browserAutomation, aiIntegration } = context;
     
-    try {
-      for (let i = 0; i < iterations; i++) {
-        console.log(`🔄 Loop iteration ${i + 1}/${iterations}`);
+    switch (task.type) {
+      case 'navigate':
+        if (page && task.params.url) {
+          await page.goto(task.params.url, { waitUntil: 'networkidle' });
+          return {
+            action: 'navigated',
+            url: page.url(),
+            title: await page.title()
+          };
+        }
+        break;
         
-        for (const loopStep of loopSteps) {
-          const result = await this.executeStep(loopStep, {
-            ...context,
-            loopIteration: i
+      case 'click':
+        if (page && task.params.selector) {
+          await page.waitForSelector(task.params.selector, { timeout: 10000 });
+          await page.click(task.params.selector);
+          return {
+            action: 'clicked',
+            selector: task.params.selector
+          };
+        }
+        break;
+        
+      case 'type':
+        if (page && task.params.selector && task.params.text) {
+          await page.waitForSelector(task.params.selector);
+          await page.fill(task.params.selector, task.params.text);
+          return {
+            action: 'typed',
+            selector: task.params.selector,
+            text: task.params.text
+          };
+        }
+        break;
+        
+      case 'extract':
+        if (page && task.params.selector) {
+          const data = await page.$$eval(task.params.selector, els => 
+            els.map(el => el.textContent?.trim()).filter(text => text)
+          );
+          return {
+            action: 'extracted',
+            selector: task.params.selector,
+            data: data,
+            count: data.length
+          };
+        }
+        break;
+        
+      case 'wait':
+        const duration = task.params.duration || 1000;
+        await new Promise(resolve => setTimeout(resolve, duration));
+        return {
+          action: 'waited',
+          duration: duration
+        };
+        
+      case 'screenshot':
+        if (page) {
+          const screenshot = await page.screenshot({
+            fullPage: task.params.fullPage || false,
+            quality: task.params.quality || 90
           });
-          
-          results.push(result);
-          
-          if (!result.success) {
-            throw new Error(`Loop failed at iteration ${i + 1}: ${result.error}`);
-          }
+          return {
+            action: 'screenshot',
+            screenshot: screenshot.toString('base64')
+          };
+        }
+        break;
+        
+      case 'ai_analyze':
+        if (aiIntegration && task.params.content) {
+          // This would integrate with your AI system for content analysis
+          return {
+            action: 'ai_analyzed',
+            content: task.params.content,
+            analysis: 'AI analysis placeholder'
+          };
+        }
+        break;
+        
+      default:
+        throw new Error(`Unknown task type: ${task.type}`);
+    }
+    
+    throw new Error(`Failed to execute task: ${task.type} - missing parameters or context`);
+  }
+
+  /**
+   * Process and validate tasks
+   */
+  processTasks(tasks) {
+    return tasks.map((task, index) => ({
+      id: task.id || `task_${index + 1}`,
+      name: task.name || `Task ${index + 1}`,
+      type: task.type,
+      description: task.description || '',
+      params: task.params || {},
+      dependencies: task.dependencies || [],
+      optional: task.optional || false,
+      retries: task.retries || 3,
+      timeout: task.timeout || 30000
+    }));
+  }
+
+  /**
+   * Group tasks by their dependencies for parallel execution
+   */
+  groupTasksByDependencies(tasks) {
+    const groups = [];
+    const processed = new Set();
+    const taskMap = new Map(tasks.map(t => [t.id, t]));
+    
+    while (processed.size < tasks.length) {
+      const currentGroup = [];
+      
+      for (const task of tasks) {
+        if (processed.has(task.id)) continue;
+        
+        // Check if all dependencies are satisfied
+        const dependenciesMet = task.dependencies.every(dep => processed.has(dep));
+        
+        if (dependenciesMet) {
+          currentGroup.push(task);
         }
       }
       
-      return {
-        action: 'loop_executed',
-        success: true,
-        iterations: iterations,
-        results: results
-      };
+      if (currentGroup.length === 0) {
+        // Circular dependency or unresolvable dependencies
+        const remaining = tasks.filter(t => !processed.has(t.id));
+        console.warn('⚠️ Circular dependencies detected, adding remaining tasks');
+        currentGroup.push(...remaining);
+      }
       
-    } catch (error) {
-      return {
-        action: 'loop_executed',
-        success: false,
-        error: error.message,
-        completedIterations: results.length / loopSteps.length,
-        results: results
-      };
+      groups.push(currentGroup);
+      currentGroup.forEach(task => processed.add(task.id));
     }
+    
+    return groups;
+  }
+
+  /**
+   * Generate execution summary
+   */
+  generateExecutionSummary(execution, results) {
+    const successful = Array.from(results.values()).filter(r => r.success).length;
+    const failed = execution.errors.length;
+    
+    return {
+      totalTasks: results.size + failed,
+      successful: successful,
+      failed: failed,
+      duration: execution.duration,
+      status: execution.status,
+      efficiency: successful / (successful + failed) * 100
+    };
   }
 
   /**
    * Get workflow execution status
    */
   getExecutionStatus(executionId) {
-    const activeExecution = this.activeWorkflows.get(executionId);
-    if (activeExecution) {
-      return {
-        ...activeExecution,
-        isActive: true
-      };
-    }
-
-    const historyExecution = this.workflowHistory.find(w => w.id === executionId);
-    if (historyExecution) {
-      return {
-        ...historyExecution,
-        isActive: false
-      };
-    }
-
-    return null;
-  }
-
-  /**
-   * Get all active workflows
-   */
-  getActiveWorkflows() {
-    return Array.from(this.activeWorkflows.values());
+    return this.activeExecutions.get(executionId);
   }
 
   /**
    * Get workflow history
    */
-  getWorkflowHistory(limit = 50) {
-    return this.workflowHistory.slice(-limit);
+  getExecutionHistory(limit = 10) {
+    return this.executionHistory.slice(-limit);
   }
 
   /**
-   * Cancel a running workflow
+   * Create workflow template
    */
-  cancelWorkflow(executionId) {
-    const execution = this.activeWorkflows.get(executionId);
-    if (execution) {
-      execution.status = 'cancelled';
-      execution.endTime = new Date();
-      execution.duration = execution.endTime - execution.startTime;
-      
-      this.workflowHistory.push(execution);
-      this.activeWorkflows.delete(executionId);
-      
-      return true;
-    }
-    return false;
-  }
-
-  /**
-   * Create a workflow from AI conversation
-   */
-  createWorkflowFromAI(aiResponse, userQuery) {
-    if (!aiResponse.commands || aiResponse.commands.length === 0) {
-      return null;
-    }
-
-    const workflow = {
-      id: uuidv4(),
-      name: `AI Generated: ${userQuery.slice(0, 50)}...`,
-      description: aiResponse.explanation || 'Workflow generated from AI conversation',
-      steps: aiResponse.commands.map((command, index) => ({
-        id: `step_${index + 1}`,
-        type: command.type,
-        params: command.params || {},
-        description: command.description || `${command.type} action`
-      })),
-      created: new Date(),
-      source: 'ai_conversation',
-      originalQuery: userQuery
+  createTemplate(name, description, taskTemplates) {
+    const templateId = uuidv4();
+    
+    const template = {
+      id: templateId,
+      name: name,
+      description: description,
+      taskTemplates: taskTemplates,
+      created: new Date().toISOString()
     };
+    
+    this.workflowTemplates.set(templateId, template);
+    return template;
+  }
 
-    return workflow;
+  /**
+   * Generate workflow from template
+   */
+  generateFromTemplate(templateId, parameters = {}) {
+    const template = this.workflowTemplates.get(templateId);
+    if (!template) {
+      throw new Error(`Template not found: ${templateId}`);
+    }
+    
+    // Process template with parameters
+    const tasks = template.taskTemplates.map(taskTemplate => {
+      const task = { ...taskTemplate };
+      
+      // Replace parameter placeholders
+      if (task.params) {
+        task.params = this.replaceParameters(task.params, parameters);
+      }
+      
+      return task;
+    });
+    
+    return this.createWorkflow(
+      template.name,
+      template.description,
+      tasks
+    );
+  }
+
+  /**
+   * Replace parameter placeholders in task parameters
+   */
+  replaceParameters(params, parameters) {
+    const processed = { ...params };
+    
+    for (const [key, value] of Object.entries(processed)) {
+      if (typeof value === 'string' && value.includes('{{')) {
+        processed[key] = value.replace(/\{\{(\w+)\}\}/g, (match, paramName) => {
+          return parameters[paramName] || match;
+        });
+      }
+    }
+    
+    return processed;
   }
 }
 
