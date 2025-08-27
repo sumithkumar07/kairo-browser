@@ -760,25 +760,31 @@
         }
       };
 
-      // AI Functions
+      // Enhanced AI Functions with Learning and Voice
       const handleAICommand = async (command) => {
         if (!command.trim() || aiProcessing) return;
+
+        // 🧠 Learn from user interaction
+        learnFromUserInteraction(command, currentUrl);
 
         addMessage({
           role: 'user',
           content: command,
-          timestamp: new Date()
+          timestamp: new Date(),
+          isVoice: isListening || command === voiceTranscript
         });
 
         setInputValue('');
+        setVoiceTranscript('');
         setAiProcessing(true);
 
         try {
           if (window.kairoAPI?.ai && aiStatus === 'ready') {
-            // Show AI working message
+            // Enhanced AI working message with context awareness
+            const contextAwareMessage = generateContextAwareMessage(command);
             addMessage({
               role: 'assistant',
-              content: 'I understand! Watch the browser - I\'ll handle this for you.',
+              content: contextAwareMessage,
               type: 'working',
               timestamp: new Date()
             });
@@ -786,10 +792,16 @@
             const response = await window.kairoAPI.ai.processInput(command, {
               currentUrl: currentUrl,
               pageTitle: pageTitle,
-              timestamp: new Date().toISOString()
+              timestamp: new Date().toISOString(),
+              userPreferences: userPreferences,
+              activeTab: activeTabId,
+              totalTabs: tabs.length
             });
 
             if (response.success) {
+              // 🧠 Generate proactive suggestions based on response
+              const proactiveSuggestions = generateProactiveSuggestions(command, response);
+              
               addMessage({
                 role: 'assistant',
                 content: response.message,
@@ -798,14 +810,14 @@
                 timestamp: new Date()
               });
 
-              // Add suggestions
-              if (response.proactiveActions?.length > 0) {
+              // Add proactive suggestions
+              if (proactiveSuggestions.length > 0) {
                 setTimeout(() => {
                   addMessage({
                     role: 'assistant',
-                    content: 'What would you like to do next?',
+                    content: 'Based on what you just did, you might also want to:',
                     type: 'suggestions',
-                    suggestions: response.proactiveActions,
+                    suggestions: proactiveSuggestions,
                     timestamp: new Date()
                   });
                 }, 2000);
@@ -819,7 +831,7 @@
               });
             }
           } else {
-            // Demo mode
+            // Enhanced demo mode with tab support
             simulateAIResponse(command);
           }
         } catch (error) {
@@ -833,6 +845,44 @@
         } finally {
           setAiProcessing(false);
         }
+      };
+
+      const generateContextAwareMessage = (command) => {
+        const hour = new Date().getHours();
+        const timeContext = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
+        
+        if (command.toLowerCase().includes('youtube')) {
+          return `Great ${timeContext} for some videos! I'll navigate to YouTube and get that set up for you.`;
+        }
+        if (command.toLowerCase().includes('amazon')) {
+          return `Perfect timing for shopping! Let me open Amazon and help you find what you need.`;
+        }
+        if (command.toLowerCase().includes('search')) {
+          return `I'll search for that right away! Watch me work in the browser.`;
+        }
+        return `I understand! Watch the browser - I'll handle this ${timeContext} task for you.`;
+      };
+
+      const generateProactiveSuggestions = (command, response) => {
+        const suggestions = [];
+        
+        if (command.toLowerCase().includes('youtube')) {
+          suggestions.push('Search for related videos');
+          suggestions.push('Create a playlist');
+          suggestions.push('Check trending content');
+        }
+        if (command.toLowerCase().includes('amazon')) {
+          suggestions.push('Compare prices with other sites');
+          suggestions.push('Check product reviews');
+          suggestions.push('Add to wishlist');
+        }
+        if (command.toLowerCase().includes('search')) {
+          suggestions.push('Search on a different site');
+          suggestions.push('Get more detailed results');
+          suggestions.push('Save this search');
+        }
+        
+        return suggestions.slice(0, 2); // Return max 2 suggestions
       };
 
       const simulateAIResponse = (command) => {
