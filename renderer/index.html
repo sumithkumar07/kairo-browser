@@ -1038,6 +1038,38 @@
                 </div>
               </div>
 
+              {/* 📑 Tab Management Bar */}
+              <div className="tab-bar">
+                {tabs.map((tab) => (
+                  <div
+                    key={tab.id}
+                    className={`tab-item ${activeTabId === tab.id ? 'active' : ''}`}
+                    onClick={() => switchTab(tab.id)}
+                  >
+                    <span className="mr-2">{tab.favicon}</span>
+                    <span className="flex-1 truncate">{tab.title}</span>
+                    {tabs.length > 1 && (
+                      <button
+                        className="tab-close ml-2"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          closeTab(tab.id);
+                        }}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button 
+                  className="new-tab-btn"
+                  onClick={() => createNewTab()}
+                  title="New Tab"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+
               {/* Browser Content Area */}
               <div className="flex-1 p-4">
                 <div className="browser-frame h-full relative">
