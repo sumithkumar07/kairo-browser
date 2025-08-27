@@ -206,6 +206,7 @@
       const [browserReady, setBrowserReady] = useState(false);
       const [canGoBack, setCanGoBack] = useState(false);
       const [canGoForward, setCanGoForward] = useState(false);
+      const [showRealBrowser, setShowRealBrowser] = useState(false);
 
       // AI Chat State
       const [messages, setMessages] = useState([]);
@@ -215,6 +216,7 @@
 
       // Refs
       const messagesEndRef = useRef(null);
+      const webviewRef = useRef(null);
 
       // Initialize System
       useEffect(() => {
