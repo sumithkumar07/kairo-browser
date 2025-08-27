@@ -561,12 +561,123 @@
         }
       };
 
-      const addMessage = (message) => {
-        setMessages(prev => [...prev, { ...message, id: Date.now() + Math.random() }]);
+      // 📑 Tab Management Functions
+      const createNewTab = (url = 'about:blank', title = 'New Tab') => {
+        const newTab = {
+          id: `tab_${Date.now()}`,
+          title: title,
+          url: url,
+          favicon: url.includes('youtube') ? '▶️' : url.includes('amazon') ? '🛒' : url.includes('google') ? '🔍' : '🌐'
+        };
+        setTabs(prev => [...prev, newTab]);
+        setActiveTabId(newTab.id);
+        return newTab.id;
       };
 
-      const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      const switchTab = (tabId) => {
+        const tab = tabs.find(t => t.id === tabId);
+        if (tab) {
+          setActiveTabId(tabId);
+          setCurrentUrl(tab.url);
+          setPageTitle(tab.title);
+          if (webviewRef.current) {
+            webviewRef.current.src = tab.url;
+          }
+        }
+      };
+
+      const closeTab = (tabId) => {
+        if (tabs.length <= 1) return; // Don't close last tab
+        
+        const newTabs = tabs.filter(t => t.id !== tabId);
+        setTabs(newTabs);
+        
+        if (activeTabId === tabId) {
+          const newActiveTab = newTabs[newTabs.length - 1];
+          switchTab(newActiveTab.id);
+        }
+      };
+
+      const updateActiveTab = (url, title) => {
+        setTabs(prev => prev.map(tab => 
+          tab.id === activeTabId 
+            ? { ...tab, url, title, favicon: url.includes('youtube') ? '▶️' : url.includes('amazon') ? '🛒' : url.includes('google') ? '🔍' : '🌐' }
+            : tab
+        ));
+      };
+
+      // 🎤 Voice Command Functions
+      const startVoiceRecognition = () => {
+        if (speechRecognitionRef.current && !isListening) {
+          speechRecognitionRef.current.start();
+        }
+      };
+
+      const stopVoiceRecognition = () => {
+        if (speechRecognitionRef.current && isListening) {
+          speechRecognitionRef.current.stop();
+        }
+      };
+
+      // 🧠 Advanced AI Functions
+      const generateSmartSuggestions = () => {
+        const currentTime = new Date().getHours();
+        const suggestions = [];
+
+        // Time-based suggestions
+        if (currentTime < 12) {
+          suggestions.push("Check morning news on Google");
+          suggestions.push("Look up today's weather");
+        } else if (currentTime < 17) {
+          suggestions.push("Search for lunch recipes");
+          suggestions.push("Check productivity apps");
+        } else {
+          suggestions.push("Browse YouTube for evening entertainment");
+          suggestions.push("Check movie reviews on Amazon");
+        }
+
+        // Preference-based suggestions
+        if (userPreferences.favoriteTopics.includes('tech')) {
+          suggestions.push("Latest tech news on TechCrunch");
+        }
+        if (userPreferences.favoriteTopics.includes('shopping')) {
+          suggestions.push("Browse deals on Amazon");
+        }
+
+        setSmartSuggestions(suggestions.slice(0, 3));
+      };
+
+      const learnFromUserInteraction = (command, url) => {
+        setAiLearning(true);
+        
+        // Update user preferences
+        const newPrefs = { ...userPreferences };
+        
+        // Track visited sites
+        if (!newPrefs.visitedSites.includes(url)) {
+          newPrefs.visitedSites.push(url);
+        }
+        
+        // Extract topics from commands
+        if (command.toLowerCase().includes('tech')) {
+          if (!newPrefs.favoriteTopics.includes('tech')) {
+            newPrefs.favoriteTopics.push('tech');
+          }
+        }
+        if (command.toLowerCase().includes('shop') || command.toLowerCase().includes('buy')) {
+          if (!newPrefs.favoriteTopics.includes('shopping')) {
+            newPrefs.favoriteTopics.push('shopping');
+          }
+        }
+        
+        setUserPreferences(newPrefs);
+        localStorage.setItem('kairo-user-preferences', JSON.stringify(newPrefs));
+        
+        // Regenerate suggestions based on learning
+        setTimeout(() => {
+          generateSmartSuggestions();
+          setAiLearning(false);
+        }, 1000);
       };
 
       // Browser Functions
