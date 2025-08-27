@@ -598,58 +598,96 @@
 
               {/* Browser Content Area */}
               <div className="flex-1 p-4">
-                <div className="browser-frame h-full">
-                  {browserReady ? (
+                <div className="browser-frame h-full relative">
+                  {/* Loading Overlay */}
+                  {isLoading && (
+                    <div className="browser-loading-overlay">
+                      <div className="text-center">
+                        <Loader className="w-12 h-12 mx-auto mb-4 animate-spin text-blue-600" />
+                        <p className="text-lg font-medium text-gray-800">Loading {pageTitle}...</p>
+                        <p className="text-sm text-gray-600">AI is controlling the browser</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Real Browser Content */}
+                  {showRealBrowser ? (
+                    <iframe
+                      ref={webviewRef}
+                      src={currentUrl}
+                      className="browser-webview"
+                      title="AI Controlled Browser"
+                      onLoad={() => setIsLoading(false)}
+                      sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals"
+                    />
+                  ) : (
+                    /* Welcome Screen */
                     <div className="h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 text-gray-800">
-                      <div className="text-center p-8">
+                      <div className="text-center p-8 max-w-2xl">
                         <Globe className="w-32 h-32 text-blue-600 mx-auto mb-6" />
-                        <h2 className="text-4xl font-bold mb-4">Browser Ready</h2>
-                        <p className="text-xl text-gray-600 mb-6 max-w-md">
-                          🎯 This is where you'll see websites loading and AI controlling the browser automatically!
+                        <h2 className="text-4xl font-bold mb-4">🤖 Kairo AI Browser Ready</h2>
+                        <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+                          Your AI assistant is ready to control any website! Tell me what you want to do and watch me work.
                         </p>
                         
-                        <div className="bg-white/80 p-6 rounded-xl border border-gray-200 mb-6">
-                          <p className="font-semibold text-gray-800 mb-2">Current Page</p>
-                          <p className="text-sm text-gray-600 mb-2"><strong>URL:</strong> {currentUrl}</p>
-                          <p className="text-sm text-gray-600"><strong>Status:</strong> {isLoading ? '🔄 Loading...' : '✅ Ready for AI control'}</p>
+                        <div className="bg-white/90 backdrop-blur p-6 rounded-2xl border border-gray-200 mb-8 text-left">
+                          <h3 className="font-bold text-gray-800 mb-3 text-center">🎯 What I Can Do:</h3>
+                          <div className="space-y-2 text-sm text-gray-700">
+                            <div className="flex items-center space-x-2">
+                              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                              <span><strong>Navigate:</strong> "Go to YouTube" or "Open Amazon"</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                              <span><strong>Search:</strong> "Search for iPhone reviews"</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+                              <span><strong>Complex Tasks:</strong> "Compare prices on 3 different sites"</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+                              <span><strong>Multi-Step:</strong> "Find the best laptop under $1000"</span>
+                            </div>
+                          </div>
                         </div>
                         
-                        <div className="space-y-3">
-                          <p className="text-gray-600 font-medium">Quick Navigation:</p>
-                          <div className="flex flex-wrap justify-center gap-3">
+                        <div className="space-y-4">
+                          <p className="text-gray-600 font-semibold">🚀 Quick Start - Try These Sites:</p>
+                          <div className="flex flex-wrap justify-center gap-4">
                             <button 
                               onClick={() => navigateToUrl('https://youtube.com')}
-                              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center space-x-2"
+                              className="quick-nav-btn youtube flex items-center space-x-2"
                             >
-                              <Play className="w-4 h-4" />
+                              <Play className="w-5 h-5" />
                               <span>YouTube</span>
                             </button>
                             <button 
                               onClick={() => navigateToUrl('https://amazon.com')}
-                              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                              className="quick-nav-btn amazon"
                             >
-                              Amazon
+                              🛒 Amazon
                             </button>
                             <button 
                               onClick={() => navigateToUrl('https://google.com')}
-                              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                              className="quick-nav-btn google"
                             >
-                              Google
+                              🔍 Google
                             </button>
                           </div>
                         </div>
                         
-                        <p className="text-sm text-gray-500 mt-6">
-                          💡 Try telling the AI: "Go to YouTube and search for AI tutorials"
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="h-full flex items-center justify-center bg-gray-100">
-                      <div className="text-center text-gray-600">
-                        <Loader className="w-16 h-16 mx-auto mb-4 animate-spin" />
-                        <p className="text-xl">Initializing browser engine...</p>
-                        <p className="text-sm mt-2">Setting up AI-controlled browser</p>
+                        <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                          <p className="text-sm text-blue-800 font-medium mb-2">💡 Pro Tip:</p>
+                          <p className="text-sm text-blue-700">
+                            Try: <strong>"Go to YouTube and search for AI tutorials"</strong> - Watch me control the browser automatically!
+                          </p>
+                        </div>
+                        
+                        <div className="mt-6 text-xs text-gray-500 space-y-1">
+                          <p><strong>Current Status:</strong> {isLoading ? '🔄 Loading...' : '✅ Ready for AI commands'}</p>
+                          <p><strong>AI Mode:</strong> {aiStatus === 'ready' ? '🤖 Full AI Control' : '🎭 Demo Mode'}</p>
+                        </div>
                       </div>
                     </div>
                   )}
