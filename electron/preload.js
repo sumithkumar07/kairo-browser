@@ -1,63 +1,78 @@
 /**
- * Kairo AI Browser - Preload Script
- * Secure bridge between main process and renderer process
+ * Browser + AI Preload Script
+ * Secure bridge for split-screen browser + AI interface
  */
 
 const { contextBridge, ipcRenderer } = require('electron');
 
-// Expose secure API to renderer process
+// Secure API Bridge for Browser + AI Interface
 contextBridge.exposeInMainWorld('kairoAPI', {
-  // System information
-  system: {
-    isElectron: true,
-    getInfo: () => ipcRenderer.invoke('system-info')
-  },
-
-  // Browser controls
-  browser: {
-    navigate: (url) => ipcRenderer.invoke('browser-navigate', url),
-    execute: (command, params) => ipcRenderer.invoke('browser-execute', command, params),
-    getContent: () => ipcRenderer.invoke('get-page-content'),
-    screenshot: (options) => ipcRenderer.invoke('take-screenshot', options)
-  },
-
-  // AI integration
+  // AI System
   ai: {
-    query: (query, context) => ipcRenderer.invoke('ai-query', query, context)
+    // Initialize AI system
+    initialize: () => ipcRenderer.invoke('ai-initialize'),
+    
+    // Process natural language input with browser control
+    processInput: (input, context) => ipcRenderer.invoke('ai-process-input', input, context),
   },
 
-  // Workflow management
-  workflow: {
-    execute: (workflow) => ipcRenderer.invoke('workflow-execute', workflow)
+  // Browser Controls
+  browser: {
+    // Navigation
+    navigate: (url) => ipcRenderer.invoke('browser-navigate', url),
+    goBack: () => ipcRenderer.invoke('browser-go-back'),
+    goForward: () => ipcRenderer.invoke('browser-go-forward'),
+    refresh: () => ipcRenderer.invoke('browser-refresh'),
   },
 
-  // Window controls
-  window: {
-    minimize: () => ipcRenderer.invoke('window-minimize'),
-    maximize: () => ipcRenderer.invoke('window-maximize'),
-    close: () => ipcRenderer.invoke('window-close')
+  // System Information
+  system: {
+    getInfo: () => ipcRenderer.invoke('system-info'),
   },
 
-  // File operations
-  file: {
-    save: (filepath, content) => ipcRenderer.invoke('file-save', filepath, content)
-  },
+  // Error Reporting
+  reportError: (errorData) => ipcRenderer.invoke('report-error', errorData),
 
-  // Event listeners
-  on: (channel, callback) => {
-    const validChannels = ['chromium-ready', 'workflow-progress', 'ai-response'];
+  // Event Listeners
+  on: (channel, func) => {
+    const validChannels = ['system-ready', 'browser-updated', 'ai-response'];
     if (validChannels.includes(channel)) {
-      ipcRenderer.on(channel, callback);
+      ipcRenderer.on(channel, func);
     }
   },
 
-  off: (channel, callback) => {
-    ipcRenderer.removeListener(channel, callback);
+  // Remove Event Listeners
+  removeListener: (channel, func) => {
+    ipcRenderer.removeListener(channel, func);
+  },
+
+  // App Information
+  app: {
+    getName: () => 'Kairo AI Browser - Browser + AI',
+    getVersion: () => '2.0.0',
+    getMode: () => 'browser-ai-split'
   }
 });
 
-// Enhance console with local-first indicators
-console.log('🚀 Kairo AI Browser - Local-First Mode Activated');
-console.log('🖥️  Running with embedded Chromium engine');
-console.log('🤖 AI processing available locally');
-console.log('⚡ Native browser automation enabled');
+// Global error handler
+window.addEventListener('error', (error) => {
+  ipcRenderer.invoke('report-error', {
+    type: 'javascript-error',
+    message: error.message,
+    filename: error.filename,
+    lineno: error.lineno,
+    colno: error.colno,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Unhandled promise rejection handler
+window.addEventListener('unhandledrejection', (event) => {
+  ipcRenderer.invoke('report-error', {
+    type: 'unhandled-promise-rejection',
+    reason: event.reason.toString(),
+    timestamp: new Date().toISOString()
+  });
+});
+
+console.log('🔗 Browser + AI Preload Script loaded - Split-screen bridge ready');

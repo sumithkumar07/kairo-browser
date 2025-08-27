@@ -1,95 +1,42 @@
 /**
- * Kairo AI Browser - Local-First Main Process
- * Electron main process for local-first architecture
+ * Browser + AI Main Process
+ * Split-screen interface with visible browser + AI chat
  */
 
-const { app, BrowserWindow, session, ipcMain, protocol, net } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const { chromium } = require('playwright');
-const fs = require('fs');
-const os = require('os');
-const sqlite3 = require('sqlite3').verbose();
 
-// Local modules
-const BrowserAutomation = require('./browser-automation');
-const WorkflowEngine = require('../orchestrator/workflow-engine');
-const AIIntegration = require('../orchestrator/ai-integration');
-const SyncClient = require('../sync/sync-client');
+// Import AI components
+const EnhancedAIIntegration = require('../orchestrator/ai-integration-enhanced');
 
-class KairoLocalBrowser {
+class BrowserAIApp {
   constructor() {
     this.mainWindow = null;
-    this.browserAutomation = new BrowserAutomation();
-    this.workflowEngine = new WorkflowEngine();
-    this.aiIntegration = new AIIntegration();
-    this.syncClient = new SyncClient();
-    this.chromiumContext = null;
+    this.ai = new EnhancedAIIntegration();
+    this.chromiumBrowser = null;
     this.activePage = null;
-    this.db = null; // SQLite database
+    this.isInitialized = false;
     
     this.setupApp();
-  }
-
-  // Initialize local database
-  initDatabase() {
-    const dbPath = path.join(app.getPath('userData'), 'kairo_local.db');
-    this.db = new sqlite3.Database(dbPath);
-    
-    console.log('📂 Database initialized at:', dbPath);
-    
-    // Create tables for local storage
-    this.db.serialize(() => {
-      this.db.run(`CREATE TABLE IF NOT EXISTS sessions (
-        id TEXT PRIMARY KEY,
-        data TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )`);
-      
-      this.db.run(`CREATE TABLE IF NOT EXISTS ai_interactions (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        session_id TEXT,
-        query TEXT,
-        response TEXT,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-      )`);
-      
-      this.db.run(`CREATE TABLE IF NOT EXISTS browser_history (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        session_id TEXT,
-        url TEXT,
-        title TEXT,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-      )`);
-      
-      console.log('✅ Database tables created successfully');
-    });
   }
 
   setupApp() {
     // Container environment compatibility
     app.commandLine.appendSwitch('no-sandbox');
-    app.commandLine.appendSwitch('disable-setuid-sandbox');
+    app.commandLine.appendSwitch('disable-setuid-sandbox'); 
     app.commandLine.appendSwitch('disable-dev-shm-usage');
-    
-    // Enable hardware acceleration
-    app.commandLine.appendSwitch('enable-features', 'VaapiVideoDecoder');
-    app.commandLine.appendSwitch('ignore-certificate-errors');
     app.commandLine.appendSwitch('disable-web-security');
-    
-    // Handle app events
+
     app.whenReady().then(() => {
-      this.initDatabase();
       this.createWindow();
+      this.initializeBrowserAI();
     });
+
     app.on('window-all-closed', () => {
       if (process.platform !== 'darwin') {
         this.cleanup();
         app.quit();
-      }
-    });
-    app.on('activate', () => {
-      if (BrowserWindow.getAllWindows().length === 0) {
-        this.createWindow();
       }
     });
 
@@ -97,127 +44,211 @@ class KairoLocalBrowser {
   }
 
   async createWindow() {
-    // Create the browser window
     this.mainWindow = new BrowserWindow({
       width: 1400,
       height: 900,
-      minWidth: 1000,
-      minHeight: 600,
+      minWidth: 1200,
+      minHeight: 700,
       titleBarStyle: 'hiddenInset',
-      trafficLightPosition: { x: 10, y: 10 },
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,
-        preload: path.join(__dirname, 'preload.js'),
-        webSecurity: false // For local development
+        preload: path.join(__dirname, 'preload-browser-ai.js'),
+        webSecurity: false
       },
-      show: false
+      show: false,
+      backgroundColor: '#1a1a1a'
     });
 
-    // Load the React app
+    // Load Browser + AI Interface
     const isDev = process.env.NODE_ENV === 'development';
     if (isDev) {
-      // Load from local HTML file in development
-      this.mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
+      this.mainWindow.loadFile(path.join(__dirname, '../renderer/index-browser-ai.html'));
       this.mainWindow.webContents.openDevTools();
     } else {
-      this.mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
+      this.mainWindow.loadFile(path.join(__dirname, '../renderer/index-browser-ai.html'));
     }
 
-    // Show window when ready
     this.mainWindow.once('ready-to-show', () => {
       this.mainWindow.show();
     });
-
-    // Initialize embedded Chromium
-    await this.initializeChromium();
   }
 
-  async initializeChromium() {
+  async initializeBrowserAI() {
     try {
-      console.log('🚀 Initializing embedded Chromium browser...');
+      console.log('🚀 Initializing Browser + AI System...');
       
-      const browser = await chromium.launch({
-        headless: false, // Can be changed to true for headless mode
+      // Initialize visible Chromium browser
+      await this.initializeVisibleBrowser();
+      
+      // Mark as initialized
+      this.isInitialized = true;
+      
+      console.log('✅ Browser + AI System ready!');
+
+      // Notify renderer
+      if (this.mainWindow) {
+        this.mainWindow.webContents.send('system-ready', {
+          success: true,
+          message: 'Browser and AI systems are ready!'
+        });
+      }
+
+    } catch (error) {
+      console.error('❌ Browser + AI initialization error:', error);
+      this.isInitialized = false;
+    }
+  }
+
+  async initializeVisibleBrowser() {
+    try {
+      console.log('🌐 Starting visible browser engine...');
+      
+      // Launch Chromium in non-headless mode for visible control
+      this.chromiumBrowser = await chromium.launch({
+        headless: false, // VISIBLE browser
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
           '--disable-web-security',
           '--disable-features=TranslateUI',
-          '--disable-ipc-flooding-protection',
-          '--disable-background-timer-throttling',
-          '--disable-backgrounding-occluded-windows',
-          '--disable-renderer-backgrounding',
-        ],
+          '--start-maximized'
+        ]
       });
 
-      this.chromiumContext = await browser.newContext({
+      const context = await this.chromiumBrowser.newContext({
         viewport: { width: 1920, height: 1080 },
-        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Kairo/1.0.0',
-        locale: 'en-US',
-        timezoneId: 'America/New_York',
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 KairoAI/2.0.0'
       });
 
-      // Create initial page
-      this.activePage = await this.chromiumContext.newPage();
+      this.activePage = await context.newPage();
       
-      console.log('✅ Embedded Chromium initialized successfully');
+      // Navigate to Google initially
+      await this.activePage.goto('https://www.google.com', { waitUntil: 'networkidle' });
       
-      // Set up page event listeners
-      this.activePage.on('console', msg => {
-        console.log(`🌐 Chromium Console [${msg.type()}]:`, msg.text());
-      });
-
-      this.activePage.on('pageerror', error => {
-        console.error('🚨 Chromium Page Error:', error);
-      });
-
-      // Notify renderer that Chromium is ready
-      if (this.mainWindow) {
-        this.mainWindow.webContents.send('chromium-ready', {
-          success: true,
-          message: 'Embedded Chromium browser ready'
-        });
-      }
+      console.log('✅ Visible browser ready and showing Google');
 
     } catch (error) {
-      console.error('❌ Failed to initialize Chromium:', error);
-      if (this.mainWindow) {
-        this.mainWindow.webContents.send('chromium-ready', {
-          success: false,
-          error: error.message
-        });
-      }
+      console.error('❌ Visible browser initialization failed:', error);
+      throw error;
     }
   }
 
   setupIPC() {
-    // Browser navigation
-    ipcMain.handle('browser-navigate', async (event, url) => {
+    // AI System Initialization
+    ipcMain.handle('ai-initialize', async (event) => {
       try {
-        console.log(`🌐 Navigating to: ${url}`);
+        return {
+          success: this.isInitialized,
+          message: this.isInitialized 
+            ? "Hello! I'm your AI assistant. I can control the visible browser for you. Just tell me what you want to do!"
+            : "Starting up browser and AI systems...",
+          capabilities: [
+            "Navigate to any website",
+            "Search and extract data",
+            "Control browser interactions",
+            "Multi-step automation",
+            "Real-time visual feedback",
+            "Natural language commands"
+          ]
+        };
+      } catch (error) {
+        return {
+          success: false,
+          message: "I'm having trouble starting up. Let me try again...",
+          error: error.message
+        };
+      }
+    });
+
+    // AI Input Processing with Visible Browser Control
+    ipcMain.handle('ai-process-input', async (event, userInput, context = {}) => {
+      try {
+        console.log(`🎯 AI Processing: "${userInput}"`);
         
-        if (!this.activePage) {
-          throw new Error('Chromium not initialized');
+        if (!this.isInitialized || !this.activePage) {
+          return {
+            success: false,
+            message: "Browser is still starting up. Please wait a moment."
+          };
         }
 
+        // Enhanced context with current page info
+        const enhancedContext = {
+          ...context,
+          currentUrl: this.activePage.url(),
+          pageTitle: await this.activePage.title().catch(() => ''),
+          browserVisible: true
+        };
+
+        // Process with AI
+        const aiResponse = await this.ai.processNaturalLanguage(userInput, enhancedContext);
+        
+        // Execute browser commands if generated
+        const browserResults = [];
+        if (aiResponse.parallelTasks && aiResponse.parallelTasks.length > 0) {
+          for (const task of aiResponse.parallelTasks) {
+            try {
+              const result = await this.executeBrowserTask(task);
+              browserResults.push([task.id, result]);
+              
+              // Notify renderer of browser updates
+              this.mainWindow?.webContents.send('browser-updated', {
+                url: this.activePage.url(),
+                title: await this.activePage.title().catch(() => '')
+              });
+              
+              // Small delay between actions for visibility
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              
+            } catch (error) {
+              console.error(`Browser task failed: ${task.id}`, error);
+              browserResults.push([task.id, { success: false, error: error.message }]);
+            }
+          }
+        }
+
+        return {
+          success: true,
+          message: aiResponse.explanation || `I've processed your request: "${userInput}". Check the browser for results!`,
+          data: aiResponse,
+          browserResults: browserResults,
+          proactiveActions: aiResponse.proactiveActions || []
+        };
+        
+      } catch (error) {
+        console.error('❌ AI processing error:', error);
+        return {
+          success: false,
+          message: "I had trouble processing that request. Could you try rephrasing it?",
+          error: error.message
+        };
+      }
+    });
+
+    // Browser Navigation Controls
+    ipcMain.handle('browser-navigate', async (event, url) => {
+      try {
+        if (!this.activePage) {
+          throw new Error('Browser not ready');
+        }
+
+        console.log(`🌐 Navigating to: ${url}`);
+        
         const response = await this.activePage.goto(url, { 
           waitUntil: 'networkidle',
           timeout: 30000 
         });
 
-        const title = await this.activePage.title();
-        const finalUrl = this.activePage.url();
-
         return {
           success: true,
-          url: finalUrl,
-          title: title,
+          url: this.activePage.url(),
+          title: await this.activePage.title().catch(() => ''),
           status: response?.status() || 200
         };
       } catch (error) {
-        console.error('❌ Navigation error:', error);
+        console.error('Navigation error:', error);
         return {
           success: false,
           error: error.message
@@ -225,212 +256,183 @@ class KairoLocalBrowser {
       }
     });
 
-    // AI query processing
-    ipcMain.handle('ai-query', async (event, query, context = {}) => {
+    ipcMain.handle('browser-go-back', async (event) => {
       try {
-        console.log(`🤖 Processing AI query: ${query}`);
-        
-        const result = await this.aiIntegration.processQuery(query, {
-          ...context,
-          currentUrl: this.activePage?.url(),
-          pageTitle: await this.activePage?.title().catch(() => '')
-        });
-
-        return {
-          success: true,
-          response: result
-        };
-      } catch (error) {
-        console.error('❌ AI query error:', error);
-        return {
-          success: false,
-          error: error.message
-        };
-      }
-    });
-
-    // Browser automation
-    ipcMain.handle('browser-execute', async (event, command, params = {}) => {
-      try {
-        console.log(`⚡ Executing browser command: ${command}`);
-        
-        if (!this.activePage) {
-          throw new Error('No active page');
+        if (this.activePage) {
+          await this.activePage.goBack();
+          return { success: true };
         }
-
-        const result = await this.browserAutomation.executeCommand(
-          this.activePage, 
-          command, 
-          params
-        );
-
-        return {
-          success: true,
-          result: result
-        };
-      } catch (error) {
-        console.error('❌ Browser execution error:', error);
-        return {
-          success: false,
-          error: error.message
-        };
-      }
-    });
-
-    // Workflow execution
-    ipcMain.handle('workflow-execute', async (event, workflow) => {
-      try {
-        console.log(`🔄 Executing workflow: ${workflow.name}`);
-        
-        const result = await this.workflowEngine.execute(workflow, {
-          page: this.activePage,
-          browserAutomation: this.browserAutomation,
-          aiIntegration: this.aiIntegration
-        });
-
-        return {
-          success: true,
-          workflowId: result.id,
-          result: result
-        };
-      } catch (error) {
-        console.error('❌ Workflow execution error:', error);
-        return {
-          success: false,
-          error: error.message
-        };
-      }
-    });
-
-    // System information
-    ipcMain.handle('system-info', async (event) => {
-      return {
-        success: true,
-        system: {
-          platform: os.platform(),
-          arch: os.arch(),
-          cpus: os.cpus().length,
-          memory: Math.round(os.totalmem() / 1024 / 1024 / 1024), // GB
-          version: app.getVersion(),
-          electron: process.versions.electron,
-          chrome: process.versions.chrome,
-          node: process.versions.node
-        }
-      };
-    });
-
-    // App information (for LocalFirstDetector)
-    ipcMain.handle('get-app-info', async (event) => {
-      return {
-        appName: 'Kairo AI Browser',
-        version: app.getVersion(),
-        platform: os.platform(),
-        arch: os.arch(),
-        isLocalFirst: true,
-        environment: 'local-first'
-      };
-    });
-
-    // File operations
-    ipcMain.handle('file-save', async (event, filepath, content) => {
-      try {
-        fs.writeFileSync(filepath, content);
-        return { success: true };
+        return { success: false, error: 'Browser not ready' };
       } catch (error) {
         return { success: false, error: error.message };
       }
     });
 
-    // Window controls
-    ipcMain.handle('window-minimize', async (event) => {
-      this.mainWindow?.minimize();
-      return { success: true };
-    });
-
-    ipcMain.handle('window-maximize', async (event) => {
-      if (this.mainWindow?.isMaximized()) {
-        this.mainWindow?.unmaximize();
-      } else {
-        this.mainWindow?.maximize();
-      }
-      return { success: true };
-    });
-
-    ipcMain.handle('window-close', async (event) => {
-      this.mainWindow?.close();
-      return { success: true };
-    });
-
-    // Get page content (for UI embedding)
-    ipcMain.handle('get-page-content', async (event) => {
+    ipcMain.handle('browser-go-forward', async (event) => {
       try {
-        if (!this.activePage) {
-          return { success: false, error: 'No active page' };
+        if (this.activePage) {
+          await this.activePage.goForward();
+          return { success: true };
         }
-
-        const content = await this.activePage.content();
-        const url = this.activePage.url();
-        const title = await this.activePage.title();
-
-        return {
-          success: true,
-          content: content,
-          url: url,
-          title: title
-        };
+        return { success: false, error: 'Browser not ready' };
       } catch (error) {
-        return {
-          success: false,
-          error: error.message
-        };
+        return { success: false, error: error.message };
       }
     });
 
-    // Take screenshot
-    ipcMain.handle('take-screenshot', async (event, options = {}) => {
+    ipcMain.handle('browser-refresh', async (event) => {
       try {
-        if (!this.activePage) {
-          throw new Error('No active page');
+        if (this.activePage) {
+          await this.activePage.reload();
+          return { success: true };
         }
-
-        const screenshot = await this.activePage.screenshot({
-          fullPage: options.fullPage || false,
-          quality: options.quality || 90
-        });
-
-        return {
-          success: true,
-          screenshot: screenshot.toString('base64')
-        };
+        return { success: false, error: 'Browser not ready' };
       } catch (error) {
-        return {
-          success: false,
-          error: error.message
-        };
+        return { success: false, error: error.message };
       }
+    });
+
+    // System Information
+    ipcMain.handle('system-info', async (event) => {
+      const os = require('os');
+      return {
+        success: true,
+        system: {
+          platform: os.platform(),
+          arch: os.arch(),
+          memory: Math.round(os.totalmem() / 1024 / 1024 / 1024),
+          version: app.getVersion(),
+          browserReady: !!this.activePage,
+          aiInitialized: this.isInitialized
+        }
+      };
+    });
+
+    // Error Reporting
+    ipcMain.handle('report-error', async (event, errorData) => {
+      console.error('🚨 Frontend Error:', errorData);
+      return { success: true, message: 'Error reported' };
     });
   }
 
+  /**
+   * Execute browser tasks based on AI commands
+   */
+  async executeBrowserTask(task) {
+    if (!this.activePage) {
+      throw new Error('No active browser page');
+    }
+
+    console.log(`⚡ Executing browser task: ${task.type}`);
+
+    switch (task.type) {
+      case 'browse':
+      case 'navigate':
+        const url = task.params?.url || task.url;
+        if (url) {
+          await this.activePage.goto(url, { waitUntil: 'networkidle' });
+          return {
+            success: true,
+            action: 'navigated',
+            url: this.activePage.url(),
+            title: await this.activePage.title().catch(() => '')
+          };
+        }
+        break;
+
+      case 'search':
+        const query = task.params?.query || task.query;
+        if (query) {
+          // Try to find search box and search
+          const searchSelectors = [
+            'input[name="q"]',
+            'textarea[name="q"]', 
+            'input[type="search"]',
+            '#search',
+            '.search-input'
+          ];
+
+          for (const selector of searchSelectors) {
+            try {
+              const element = await this.activePage.$(selector);
+              if (element) {
+                await element.click();
+                await element.fill(query);
+                await element.press('Enter');
+                await this.activePage.waitForTimeout(2000);
+                return {
+                  success: true,
+                  action: 'searched',
+                  query: query,
+                  selector: selector
+                };
+              }
+            } catch (error) {
+              continue;
+            }
+          }
+        }
+        break;
+
+      case 'click':
+        const clickSelector = task.params?.selector;
+        if (clickSelector) {
+          await this.activePage.waitForSelector(clickSelector, { timeout: 10000 });
+          await this.activePage.click(clickSelector);
+          return {
+            success: true,
+            action: 'clicked',
+            selector: clickSelector
+          };
+        }
+        break;
+
+      case 'extract':
+        const extractSelector = task.params?.selector;
+        if (extractSelector) {
+          const data = await this.activePage.$$eval(extractSelector, els => 
+            els.map(el => el.textContent?.trim()).filter(text => text)
+          );
+          return {
+            success: true,
+            action: 'extracted',
+            data: data,
+            count: data.length
+          };
+        }
+        break;
+
+      case 'screenshot':
+        const screenshot = await this.activePage.screenshot({ 
+          fullPage: false,
+          quality: 80 
+        });
+        return {
+          success: true,
+          action: 'screenshot',
+          screenshot: screenshot.toString('base64')
+        };
+
+      default:
+        console.warn(`Unknown browser task type: ${task.type}`);
+    }
+
+    return {
+      success: false,
+      error: `Could not execute task: ${task.type}`
+    };
+  }
+
   async cleanup() {
-    console.log('🧹 Cleaning up resources...');
+    console.log('🧹 Cleaning up Browser + AI App...');
     
     try {
       if (this.activePage) {
         await this.activePage.close();
       }
       
-      if (this.chromiumContext) {
-        await this.chromiumContext.close();
-      }
-
-      if (this.db) {
-        this.db.close((err) => {
-          if (err) {
-            console.error('❌ Error closing database:', err);
-          } else {
-            console.log('✅ Database closed successfully');
-          }
-        });
+      if (this.chromiumBrowser) {
+        await this.chromiumBrowser.close();
       }
       
       console.log('✅ Cleanup completed');
@@ -441,15 +443,15 @@ class KairoLocalBrowser {
 }
 
 // Initialize the application
-const kairoApp = new KairoLocalBrowser();
+const browserAIApp = new BrowserAIApp();
 
-// Handle uncaught exceptions
+// Error Handling
 process.on('uncaughtException', (error) => {
   console.error('❌ Uncaught Exception:', error);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+  console.error('❌ Unhandled Rejection:', reason);
 });
 
-module.exports = KairoLocalBrowser;
+module.exports = BrowserAIApp;
