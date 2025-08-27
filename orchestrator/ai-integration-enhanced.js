@@ -301,6 +301,50 @@ Provide structured analysis with actionable insights.`;
   }
 
   /**
+   * Update user preferences based on interaction patterns
+   */
+  updateUserPreferences(userId, pattern) {
+    // Simple preference learning - can be enhanced
+    if (!this.persistentMemory.has('preferences')) {
+      this.persistentMemory.set('preferences', {});
+    }
+    
+    const prefs = this.persistentMemory.get('preferences');
+    if (!prefs[userId]) {
+      prefs[userId] = {
+        commonTasks: [],
+        preferredPlatforms: [],
+        responseStyle: 'detailed'
+      };
+    }
+    
+    // Update preferences based on successful patterns
+    if (pattern.success > 80) {
+      prefs[userId].commonTasks.push(pattern.intent);
+      // Keep only recent 10 tasks
+      prefs[userId].commonTasks = prefs[userId].commonTasks.slice(-10);
+    }
+  }
+
+  /**
+   * Handle errors gracefully
+   */
+  async handleError(error, userInput) {
+    console.error('AI Error Handler:', error.message);
+    
+    return {
+      success: false,
+      message: "I encountered an issue processing your request. Let me try a different approach - could you rephrase what you'd like me to do?",
+      error: error.message,
+      suggestions: [
+        "Try breaking your request into smaller parts",
+        "Be more specific about what you want me to find or do",
+        "Check if you're asking me to access a specific website"
+      ]
+    };
+  }
+
+  /**
    * Generate Intelligent Response
    */
   async generateIntelligentResponse(results, taskPlan) {
