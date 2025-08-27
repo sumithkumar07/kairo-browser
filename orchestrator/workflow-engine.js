@@ -103,10 +103,13 @@ class WorkflowEngine {
    * Execute workflow tasks with proper dependency management
    */
   async executeWorkflowTasks(workflow, execution) {
-    const tasks = workflow.tasks;
+    const tasks = workflow.tasks || workflow.steps; // Support both tasks and steps
     const results = new Map();
     
-    if (workflow.options.parallel) {
+    // Ensure workflow has options
+    const options = workflow.options || {};
+    
+    if (options.parallel) {
       // Execute tasks in parallel where possible
       return await this.executeParallelTasks(tasks, execution, results);
     } else {
