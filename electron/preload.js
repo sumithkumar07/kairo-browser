@@ -1,6 +1,6 @@
 /**
- * Browser + AI Preload Script
- * Secure bridge for split-screen browser + AI interface
+ * Kairo AI Browser - Preload Script
+ * Secure bridge for Browser + AI interface
  */
 
 const { contextBridge, ipcRenderer } = require('electron');
@@ -48,7 +48,7 @@ contextBridge.exposeInMainWorld('kairoAPI', {
 
   // App Information
   app: {
-    getName: () => 'Kairo AI Browser - Browser + AI',
+    getName: () => 'Kairo AI Browser',
     getVersion: () => '2.0.0',
     getMode: () => 'browser-ai-split'
   }
@@ -75,4 +75,4 @@ window.addEventListener('unhandledrejection', (event) => {
   });
 });
 
-console.log('🔗 Browser + AI Preload Script loaded - Split-screen bridge ready');
+console.log('🔗 Kairo AI Browser Preload Script loaded - Bridge ready');
