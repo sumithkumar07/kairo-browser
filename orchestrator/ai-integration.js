@@ -10,7 +10,7 @@ class AIIntegration {
   constructor() {
     this.apiKey = process.env.GROQ_API_KEY;
     this.apiUrl = 'https://api.groq.com/openai/v1/chat/completions';
-    this.model = 'llama3-8b-8192';
+    this.model = 'llama-3.3-70b-versatile'; // Llama 4 Scout (17Bx16E) equivalent
     this.contextMemory = [];
     this.maxContextLength = 10;
   }
