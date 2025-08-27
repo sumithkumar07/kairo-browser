@@ -19,9 +19,12 @@
     "install:playwright": "npx playwright install chromium",
     "postinstall": "npm run install:playwright",
     "setup": "node install.js",
-    "test": "npm run test:browser-ai",
+    "test": "npm run test:core && npm run test:integration",
     "test:browser-ai": "node test-simple.js",
-    "test:core": "node test-core.js"
+    "test:core": "node test-core.js",
+    "test:integration": "node test-integration.js",
+    "test:enhanced": "node test-enhanced.js",
+    "test:all": "npm run test:core && npm run test:integration && npm run test:enhanced"
   },
   "dependencies": {
     "dotenv": "^17.2.1",
