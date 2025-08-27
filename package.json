@@ -6,10 +6,10 @@
   "private": true,
   "homepage": "./",
   "scripts": {
-    "start": "electron electron/main.js --no-sandbox",
-    "dev": "NODE_ENV=development electron electron/main.js --no-sandbox",
+    "start": "electron electron/main-enhanced.js --no-sandbox",
+    "dev": "NODE_ENV=development electron electron/main-enhanced.js --no-sandbox",
     "build": "npm run build:renderer && npm run build:electron",
-    "build:renderer": "echo 'Renderer ready' && ls renderer/",
+    "build:renderer": "echo 'Pure AI Renderer ready' && ls renderer/",
     "build:electron": "electron-builder",
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
@@ -19,7 +19,8 @@
     "install:playwright": "npx playwright install chromium",
     "postinstall": "npm run install:playwright",
     "setup": "node install.js",
-    "test": "npm run test:core",
+    "test": "npm run test:pure-ai",
+    "test:pure-ai": "node test-pure-ai.js",
     "test:core": "node test-core.js"
   },
   "dependencies": {
