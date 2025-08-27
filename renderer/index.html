@@ -680,8 +680,16 @@
         }, 1000);
       };
 
-      // Browser Functions
-      const navigateToUrl = async (url) => {
+      const addMessage = (message) => {
+        setMessages(prev => [...prev, { ...message, id: Date.now() + Math.random() }]);
+      };
+
+      const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      };
+
+      // Enhanced Browser Functions with Tab Support
+      const navigateToUrl = async (url, newTab = false) => {
         if (!url || isLoading) return;
         
         if (!url.startsWith('http://') && !url.startsWith('https://')) {
@@ -689,7 +697,12 @@
         }
 
         setIsLoading(true);
-        setShowRealBrowser(true); // Show real browser when navigating
+        setShowRealBrowser(true);
+        
+        // Create new tab if requested
+        if (newTab) {
+          const tabId = createNewTab(url, 'Loading...');
+        }
         
         try {
           if (window.kairoAPI?.browser && browserReady) {
@@ -697,8 +710,8 @@
             if (result.success) {
               setCurrentUrl(result.url);
               setPageTitle(result.title || 'Loading...');
+              updateActiveTab(result.url, result.title);
               
-              // Update webview if it exists
               if (webviewRef.current) {
                 webviewRef.current.src = result.url;
               }
@@ -707,6 +720,7 @@
             // Demo mode - show real website in iframe
             setCurrentUrl(url);
             setPageTitle('Demo - ' + new URL(url).hostname);
+            updateActiveTab(url, 'Demo - ' + new URL(url).hostname);
             
             if (webviewRef.current) {
               webviewRef.current.src = url;
