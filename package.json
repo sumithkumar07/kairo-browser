@@ -1,13 +1,13 @@
 {
   "name": "kairo-ai-browser-local-first",
   "version": "1.0.0",
-  "description": "Kairo AI Browser - Local-First Desktop Application",
+  "description": "Kairo AI Browser - Local-First Desktop Application with AI Assistant and Browser Automation",
   "main": "electron/main.js",
   "private": true,
   "homepage": "./",
   "scripts": {
-    "start": "electron electron/main-browser-ai.js --no-sandbox",
-    "dev": "NODE_ENV=development electron electron/main-browser-ai.js --no-sandbox",
+    "start": "electron electron/main.js --no-sandbox",
+    "dev": "NODE_ENV=development electron electron/main.js --no-sandbox",
     "build": "npm run build:renderer && npm run build:electron",
     "build:renderer": "echo 'Browser + AI Renderer ready' && ls renderer/",
     "build:electron": "electron-builder",
@@ -20,8 +20,7 @@
     "postinstall": "npm run install:playwright",
     "setup": "node install.js",
     "test": "npm run test:browser-ai",
-    "test:browser-ai": "node test-browser-ai.js",
-    "test:pure-ai": "node test-pure-ai.js",
+    "test:browser-ai": "node test-simple.js",
     "test:core": "node test-core.js"
   },
   "dependencies": {
@@ -50,7 +49,7 @@
       "sync/**/*",
       "renderer/**/*",
       "package.json",
-      ".env.example"
+      ".env"
     ],
     "extraResources": [
       {
