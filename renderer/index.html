@@ -374,7 +374,7 @@
   <script type="text/babel">
     const { useState, useEffect, useRef } = React;
     const { motion, AnimatePresence } = FramerMotion;
-    const { Bot, Send, Loader, Globe, Home, ArrowLeft, ArrowRight, RotateCcw, Play } = LucideReact;
+    const { Bot, Send, Loader, Globe, Home, ArrowLeft, ArrowRight, RotateCcw, Play, Mic, MicOff, Plus, X, Lightbulb, Brain, Zap } = LucideReact;
 
     function BrowserAIApp() {
       // Browser State
@@ -386,15 +386,36 @@
       const [canGoForward, setCanGoForward] = useState(false);
       const [showRealBrowser, setShowRealBrowser] = useState(false);
 
+      // 📑 Tab Management State
+      const [tabs, setTabs] = useState([
+        { id: 'main', title: 'Home', url: 'https://www.google.com', favicon: '🏠' }
+      ]);
+      const [activeTabId, setActiveTabId] = useState('main');
+
       // AI Chat State
       const [messages, setMessages] = useState([]);
       const [inputValue, setInputValue] = useState('');
       const [aiProcessing, setAiProcessing] = useState(false);
       const [aiStatus, setAiStatus] = useState('initializing');
 
+      // 🎤 Voice Command State
+      const [isListening, setIsListening] = useState(false);
+      const [voiceSupported, setVoiceSupported] = useState(false);
+      const [voiceTranscript, setVoiceTranscript] = useState('');
+
+      // 🧠 Advanced AI State
+      const [smartSuggestions, setSmartSuggestions] = useState([]);
+      const [userPreferences, setUserPreferences] = useState({ 
+        visitedSites: [],
+        searchHistory: [],
+        favoriteTopics: []
+      });
+      const [aiLearning, setAiLearning] = useState(false);
+
       // Refs
       const messagesEndRef = useRef(null);
       const webviewRef = useRef(null);
+      const speechRecognitionRef = useRef(null);
 
       // Initialize System
       useEffect(() => {
